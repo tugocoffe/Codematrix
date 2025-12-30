@@ -7,13 +7,23 @@
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+    
     <style>
         body { margin: 0; background: #fdf2e9; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
-        #header { width: 100%; display: flex; justify-content: space-between; padding: 15px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        #header { width: 100%; display: flex; justify-content: space-between; padding: 15px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05); box-sizing: border-box; }
         .card { background: white; border-radius: 20px; padding: 30px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 50px; }
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-        .option-btn { padding: 15px; border: 2px solid #e67e22; border-radius: 12px; background: none; cursor: pointer; font-size: 18px; transition: 0.2s; }
+        .option-btn { padding: 15px; border: 2px solid #e67e22; border-radius: 12px; background: none; cursor: pointer; font-size: 24px; transition: 0.2s; color: #2c3e50; }
         .option-btn:hover { background: #fff3e0; }
+        
+        /* 纠错层样式 ✏️ */
+        #correction-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 100; flex-direction: column; align-items: center; justify-content: center; color: white;
+        }
+        #correction-canvas { background: white; border-radius: 15px; margin: 20px; }
+        
         .btn-primary { background: #e67e22; color: white; border: none; padding: 15px 40px; border-radius: 30px; font-size: 20px; cursor: pointer; }
     </style>
 </head>
@@ -21,19 +31,25 @@
 
 <div id="header">
     <button onclick="location.href='index.html'">🏠 离开神庙</button>
-    <div id="score-box">🪙 积分: <span id="score-display">0</span></div>
+    <div>🪙 积分: <span id="score-display">0</span></div>
 </div>
 
 <div class="card" id="game-container">
     <div id="start-screen">
         <h1 style="color: #d35400;">🏛️ 识字神庙</h1>
-        <p>守护者已准备好考验。我们会优先检查你最不熟悉的词语。</p>
+        <p>看拼音，找汉字。写错的字需要当场练习一遍哦！</p>
         <button class="btn-primary" onclick="startChallenge()">开始挑战</button>
     </div>
 </div>
 
+<div id="correction-overlay">
+    <h2>别担心，我们来练习一下：</h2>
+    <div id="correction-canvas"></div>
+    <p>请按照笔画顺序写出这个字 ✍️</p>
+</div>
+
 <script>
-    // --- 1. 配置与初始化 ---
+    // --- 1. 初始化 Firebase (请填入你的配置) ---
     const firebaseConfig = {
   apiKey: "AIzaSyAs5UvfZ79S8BEnCz3z7C_nyBlZgSfb8z0",
   authDomain: "psle-adventure.firebaseapp.com",
@@ -47,61 +63,57 @@
     const auth = firebase.auth();
 
     let learnedWords = []; 
+    let wordList = []; // 备用词库
     let testQueue = [];    
     let currentIdx = 0;
     let userDocRef = null;
 
-    // --- 2. 核心：数据兼容转换器 🔄 ---
+    // --- 2. 数据处理与兼容性 ---
     function standardizeWords(rawWords) {
         return rawWords.map(item => {
             if (typeof item === 'string') {
-                return {
-                    text: item,
-                    correctCount: 0,
-                    wrongCount: 0,
-                    lastTested: Date.now()
-                };
+                return { text: item, correctCount: 1, wrongCount: 0, lastTested: Date.now() };
             }
             return item;
         });
     }
 
-    // --- 3. 登录与数据预加载 ---
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             userDocRef = db.collection('users').doc(user.uid);
             const doc = await userDocRef.get();
-            // 读取时立即进行兼容处理
-            const rawData = doc.data()?.learnedWords || [];
-            learnedWords = standardizeWords(rawData);
+            learnedWords = standardizeWords(doc.data()?.learnedWords || []);
             document.getElementById('score-display').innerText = doc.data()?.score || 0;
+            
+            // 加载总词库以备干扰项使用
+            const res = await fetch('words.json');
+            wordList = await res.json();
         } else {
             location.href = 'index.html';
         }
     });
 
-    // --- 4. 智能选题算法 ⚖️ ---
+    // --- 3. 智能选题算法 ---
     function startChallenge() {
-        if (learnedWords.length < 5) {
-            alert("先去森林多学几个词吧！至少需要 5 个词才能开启挑战。");
+        const eligible = learnedWords.filter(w => !w.mastered);
+        if (eligible.length < 1) {
+            alert("你已经精通了目前所有的词！去森林找点新宝藏吧。");
             return;
         }
 
-        // 计算挑战分：错误 - 正确
-        const scored = learnedWords.map(w => {
-            let s = (w.wrongCount || 0) - (w.correctCount || 0);
-            if (w.wrongCount === 0 && w.correctCount === 0) s = 1; // 新词激励
-            return { ...w, s };
-        }).sort((a, b) => b.s - a.s);
+        // 差值排序：错误 - 正确
+        const sorted = eligible.map(w => ({
+            ...w,
+            diff: (w.wrongCount || 0) - (w.correctCount || 0)
+        })).sort((a, b) => b.diff - a.diff);
 
-        // 前 10 名随机抽 5 个
-        const candidates = scored.slice(0, 10);
-        testQueue = candidates.sort(() => Math.random() - 0.5).slice(0, 5);
-
+        // 前 10 随机抽 5
+        testQueue = sorted.slice(0, 10).sort(() => Math.random() - 0.5).slice(0, 5);
+        currentIdx = 0;
         renderQuestion();
     }
 
-    // --- 5. 渲染与反馈 ---
+    // --- 4. 渲染题目：看拼音选汉字 ---
     function renderQuestion() {
         if (currentIdx >= testQueue.length) {
             showResult();
@@ -109,45 +121,79 @@
         }
 
         const word = testQueue[currentIdx];
-        const options = [word.pinyin, "木", "水", "火"].sort(() => Math.random() - 0.5); 
+        
+        // 生成干扰项：从已学和总词库中抓取
+        let candidates = [...new Set([...learnedWords.map(w=>w.text), ...wordList.map(w=>w.text)])]
+            .filter(t => t !== word.text)
+            .sort(() => Math.random() - 0.5);
+        
+        const options = [word.text, ...candidates.slice(0, 3)].sort(() => Math.random() - 0.5);
 
         document.getElementById('game-container').innerHTML = `
             <h3>第 ${currentIdx + 1} / 5 题</h3>
-            <h2 style="font-size: 50px; color: #7f8c8d;">"${word.text}" 的拼音是？</h2>
+            <h2 style="font-size: 50px; color: #e67e22;">"${word.pinyin}"</h2>
+            <p>对应的汉字是？</p>
             <div class="options-grid">
-                ${options.map(opt => `<button class="option-btn" onclick="check('${opt}')">${opt}</button>`).join('')}
+                ${options.map(opt => `<button class="option-btn" onclick="checkAnswer('${opt}')">${opt}</button>`).join('')}
             </div>
         `;
     }
 
-    async function check(selected) {
-        const correct = testQueue[currentIdx].text;
-        const isCorrect = selected === correct;
+    // --- 5. 检查与纠错逻辑 ---
+    async function checkAnswer(selected) {
+        const word = testQueue[currentIdx];
+        const isCorrect = selected === word.text;
 
-        // 更新本地战绩
+        // 更新数据库
         learnedWords = learnedWords.map(w => {
-            if (w.text === correct) {
+            if (w.text === word.text) {
                 if (isCorrect) w.correctCount++;
                 else w.wrongCount++;
+                // 检查精通标准：差值 >= 3
+                if (w.correctCount - (w.wrongCount || 0) >= 3) w.mastered = true;
             }
             return w;
         });
 
-        // 同步回云端（这一步会将旧格式彻底更新为新格式）
-        await userDocRef.update({
+        await userDocRef.update({ 
             learnedWords: learnedWords,
             score: firebase.firestore.FieldValue.increment(isCorrect ? 5 : 0)
         });
 
-        alert(isCorrect ? "✅ 守护者露出了微笑！" : `❌ 再接再厉，这是"${correct}"`);
-        currentIdx++;
-        renderQuestion();
+        if (isCorrect) {
+            alert("✅ 答对了！");
+            currentIdx++;
+            renderQuestion();
+        } else {
+            // 触发 B 选项：互动纠错 ✏️
+            showCorrection(word.text);
+        }
+    }
+
+    function showCorrection(correctText) {
+        const overlay = document.getElementById('correction-overlay');
+        overlay.style.display = 'flex';
+        document.getElementById('correction-canvas').innerHTML = '';
+
+        const writer = HanziWriter.create('correction-canvas', correctText, {
+            width: 250, height: 250, padding: 15, strokeColor: '#e74c3c'
+        });
+
+        writer.quiz({
+            onComplete: () => {
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    currentIdx++;
+                    renderQuestion();
+                }, 1000);
+            }
+        });
     }
 
     function showResult() {
         document.getElementById('game-container').innerHTML = `
-            <h2>🏛️ 考验结束</h2>
-            <p>你的表现已记录在案。</p>
+            <h2>🏛️ 考验完成！</h2>
+            <p>你变得更强大了。</p>
             <button class="btn-primary" onclick="location.href='index.html'">回到地图</button>
         `;
     }
