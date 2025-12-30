@@ -1,14 +1,1288 @@
 [
   {
-    "text": "环境",
-    "pinyin": "huán jìng",
-    "english": "Environment",
-    "chars": ["环", "境"]
+    "text": "学校",
+    "pinyin": "xué xiào",
+    "english": "school",
+    "chars": [
+      "学",
+      "校"
+    ]
   },
   {
-    "text": "保护",
-    "pinyin": "bǎo hù",
-    "english": "Protect",
-    "chars": ["保", "护"]
+    "text": "教室",
+    "pinyin": "jiào shì",
+    "english": "classroom",
+    "chars": [
+      "教",
+      "室"
+    ]
+  },
+  {
+    "text": "黑板",
+    "pinyin": "hēi bǎn",
+    "english": "blackboard",
+    "chars": [
+      "黑",
+      "板"
+    ]
+  },
+  {
+    "text": "铅笔",
+    "pinyin": "qiān bǐ",
+    "english": "pencil",
+    "chars": [
+      "铅",
+      "笔"
+    ]
+  },
+  {
+    "text": "钢笔",
+    "pinyin": "gāng bǐ",
+    "english": "pen",
+    "chars": [
+      "钢",
+      "笔"
+    ]
+  },
+  {
+    "text": "橡皮",
+    "pinyin": "xiàng pí",
+    "english": "eraser",
+    "chars": [
+      "橡",
+      "皮"
+    ]
+  },
+  {
+    "text": "书包",
+    "pinyin": "shū bāo",
+    "english": "schoolbag",
+    "chars": [
+      "书",
+      "包"
+    ]
+  },
+  {
+    "text": "作业",
+    "pinyin": "zuò yè",
+    "english": "homework",
+    "chars": [
+      "作",
+      "业"
+    ]
+  },
+  {
+    "text": "老师",
+    "pinyin": "lǎo shī",
+    "english": "teacher",
+    "chars": [
+      "老",
+      "师"
+    ]
+  },
+  {
+    "text": "学生",
+    "pinyin": "xué shēng",
+    "english": "student",
+    "chars": [
+      "学",
+      "生"
+    ]
+  },
+  {
+    "text": "校长",
+    "pinyin": "xiào zhǎng",
+    "english": "principal",
+    "chars": [
+      "校",
+      "长"
+    ]
+  },
+  {
+    "text": "家人",
+    "pinyin": "jiā rén",
+    "english": "family members",
+    "chars": [
+      "家",
+      "人"
+    ]
+  },
+  {
+    "text": "爸爸",
+    "pinyin": "bà ba",
+    "english": "father",
+    "chars": [
+      "爸",
+      "爸"
+    ]
+  },
+  {
+    "text": "妈妈",
+    "pinyin": "mā ma",
+    "english": "mother",
+    "chars": [
+      "妈",
+      "妈"
+    ]
+  },
+  {
+    "text": "哥哥",
+    "pinyin": "gē ge",
+    "english": "elder brother",
+    "chars": [
+      "哥",
+      "哥"
+    ]
+  },
+  {
+    "text": "姐姐",
+    "pinyin": "jiě jie",
+    "english": "elder sister",
+    "chars": [
+      "姐",
+      "姐"
+    ]
+  },
+  {
+    "text": "弟弟",
+    "pinyin": "dì di",
+    "english": "younger brother",
+    "chars": [
+      "弟",
+      "弟"
+    ]
+  },
+  {
+    "text": "妹妹",
+    "pinyin": "mèi mei",
+    "english": "younger sister",
+    "chars": [
+      "妹",
+      "妹"
+    ]
+  },
+  {
+    "text": "爷爷",
+    "pinyin": "yé ye",
+    "english": "grandfather (paternal)",
+    "chars": [
+      "爷",
+      "爷"
+    ]
+  },
+  {
+    "text": "奶奶",
+    "pinyin": "nǎi nai",
+    "english": "grandmother (paternal)",
+    "chars": [
+      "奶",
+      "奶"
+    ]
+  },
+  {
+    "text": "外公",
+    "pinyin": "wài gōng",
+    "english": "grandfather (maternal)",
+    "chars": [
+      "外",
+      "公"
+    ]
+  },
+  {
+    "text": "外婆",
+    "pinyin": "wài pó",
+    "english": "grandmother (maternal)",
+    "chars": [
+      "外",
+      "婆"
+    ]
+  },
+  {
+    "text": "早餐",
+    "pinyin": "zǎo cān",
+    "english": "breakfast",
+    "chars": [
+      "早",
+      "餐"
+    ]
+  },
+  {
+    "text": "午餐",
+    "pinyin": "wǔ cān",
+    "english": "lunch",
+    "chars": [
+      "午",
+      "餐"
+    ]
+  },
+  {
+    "text": "晚餐",
+    "pinyin": "wǎn cān",
+    "english": "dinner",
+    "chars": [
+      "晚",
+      "餐"
+    ]
+  },
+  {
+    "text": "水果",
+    "pinyin": "shuǐ guǒ",
+    "english": "fruit",
+    "chars": [
+      "水",
+      "果"
+    ]
+  },
+  {
+    "text": "苹果",
+    "pinyin": "píng guǒ",
+    "english": "apple",
+    "chars": [
+      "苹",
+      "果"
+    ]
+  },
+  {
+    "text": "香蕉",
+    "pinyin": "xiāng jiāo",
+    "english": "banana",
+    "chars": [
+      "香",
+      "蕉"
+    ]
+  },
+  {
+    "text": "西瓜",
+    "pinyin": "xī guā",
+    "english": "watermelon",
+    "chars": [
+      "西",
+      "瓜"
+    ]
+  },
+  {
+    "text": "橙子",
+    "pinyin": "chéng zi",
+    "english": "orange",
+    "chars": [
+      "橙",
+      "子"
+    ]
+  },
+  {
+    "text": "葡萄",
+    "pinyin": "pú tao",
+    "english": "grapes",
+    "chars": [
+      "葡",
+      "萄"
+    ]
+  },
+  {
+    "text": "草莓",
+    "pinyin": "cǎo méi",
+    "english": "strawberry",
+    "chars": [
+      "草",
+      "莓"
+    ]
+  },
+  {
+    "text": "蔬菜",
+    "pinyin": "shū cài",
+    "english": "vegetables",
+    "chars": [
+      "蔬",
+      "菜"
+    ]
+  },
+  {
+    "text": "米饭",
+    "pinyin": "mǐ fàn",
+    "english": "rice",
+    "chars": [
+      "米",
+      "饭"
+    ]
+  },
+  {
+    "text": "面条",
+    "pinyin": "miàn tiáo",
+    "english": "noodles",
+    "chars": [
+      "面",
+      "条"
+    ]
+  },
+  {
+    "text": "鸡蛋",
+    "pinyin": "jī dàn",
+    "english": "egg",
+    "chars": [
+      "鸡",
+      "蛋"
+    ]
+  },
+  {
+    "text": "牛奶",
+    "pinyin": "niú nǎi",
+    "english": "milk",
+    "chars": [
+      "牛",
+      "奶"
+    ]
+  },
+  {
+    "text": "水",
+    "pinyin": "shuǐ",
+    "english": "water",
+    "chars": [
+      "水"
+    ]
+  },
+  {
+    "text": "茶",
+    "pinyin": "chá",
+    "english": "tea",
+    "chars": [
+      "茶"
+    ]
+  },
+  {
+    "text": "面包",
+    "pinyin": "miàn bāo",
+    "english": "bread",
+    "chars": [
+      "面",
+      "包"
+    ]
+  },
+  {
+    "text": "动物",
+    "pinyin": "dòng wù",
+    "english": "animals",
+    "chars": [
+      "动",
+      "物"
+    ]
+  },
+  {
+    "text": "狗",
+    "pinyin": "gǒu",
+    "english": "dog",
+    "chars": [
+      "狗"
+    ]
+  },
+  {
+    "text": "猫",
+    "pinyin": "māo",
+    "english": "cat",
+    "chars": [
+      "猫"
+    ]
+  },
+  {
+    "text": "鸟",
+    "pinyin": "niǎo",
+    "english": "bird",
+    "chars": [
+      "鸟"
+    ]
+  },
+  {
+    "text": "鱼",
+    "pinyin": "yú",
+    "english": "fish",
+    "chars": [
+      "鱼"
+    ]
+  },
+  {
+    "text": "马",
+    "pinyin": "mǎ",
+    "english": "horse",
+    "chars": [
+      "马"
+    ]
+  },
+  {
+    "text": "牛",
+    "pinyin": "niú",
+    "english": "cow",
+    "chars": [
+      "牛"
+    ]
+  },
+  {
+    "text": "羊",
+    "pinyin": "yáng",
+    "english": "sheep",
+    "chars": [
+      "羊"
+    ]
+  },
+  {
+    "text": "虎",
+    "pinyin": "hǔ",
+    "english": "tiger",
+    "chars": [
+      "虎"
+    ]
+  },
+  {
+    "text": "狮子",
+    "pinyin": "shī zi",
+    "english": "lion",
+    "chars": [
+      "狮",
+      "子"
+    ]
+  },
+  {
+    "text": "大象",
+    "pinyin": "dà xiàng",
+    "english": "elephant",
+    "chars": [
+      "大",
+      "象"
+    ]
+  },
+  {
+    "text": "猴子",
+    "pinyin": "hóu zi",
+    "english": "monkey",
+    "chars": [
+      "猴",
+      "子"
+    ]
+  },
+  {
+    "text": "鸭子",
+    "pinyin": "yā zi",
+    "english": "duck",
+    "chars": [
+      "鸭",
+      "子"
+    ]
+  },
+  {
+    "text": "鸡",
+    "pinyin": "jī",
+    "english": "chicken",
+    "chars": [
+      "鸡"
+    ]
+  },
+  {
+    "text": "天气",
+    "pinyin": "tiān qì",
+    "english": "weather",
+    "chars": [
+      "天",
+      "气"
+    ]
+  },
+  {
+    "text": "晴天",
+    "pinyin": "qíng tiān",
+    "english": "sunny",
+    "chars": [
+      "晴",
+      "天"
+    ]
+  },
+  {
+    "text": "阴天",
+    "pinyin": "yīn tiān",
+    "english": "cloudy",
+    "chars": [
+      "阴",
+      "天"
+    ]
+  },
+  {
+    "text": "下雨",
+    "pinyin": "xià yǔ",
+    "english": "raining",
+    "chars": [
+      "下",
+      "雨"
+    ]
+  },
+  {
+    "text": "下雪",
+    "pinyin": "xià xuě",
+    "english": "snowing",
+    "chars": [
+      "下",
+      "雪"
+    ]
+  },
+  {
+    "text": "风",
+    "pinyin": "fēng",
+    "english": "wind",
+    "chars": [
+      "风"
+    ]
+  },
+  {
+    "text": "热",
+    "pinyin": "rè",
+    "english": "hot",
+    "chars": [
+      "热"
+    ]
+  },
+  {
+    "text": "冷",
+    "pinyin": "lěng",
+    "english": "cold",
+    "chars": [
+      "冷"
+    ]
+  },
+  {
+    "text": "春天",
+    "pinyin": "chūn tiān",
+    "english": "spring",
+    "chars": [
+      "春",
+      "天"
+    ]
+  },
+  {
+    "text": "夏天",
+    "pinyin": "xià tiān",
+    "english": "summer",
+    "chars": [
+      "夏",
+      "天"
+    ]
+  },
+  {
+    "text": "秋天",
+    "pinyin": "qiū tiān",
+    "english": "autumn",
+    "chars": [
+      "秋",
+      "天"
+    ]
+  },
+  {
+    "text": "冬天",
+    "pinyin": "dōng tiān",
+    "english": "winter",
+    "chars": [
+      "冬",
+      "天"
+    ]
+  },
+  {
+    "text": "快乐",
+    "pinyin": "kuài lè",
+    "english": "happy",
+    "chars": [
+      "快",
+      "乐"
+    ]
+  },
+  {
+    "text": "高兴",
+    "pinyin": "gāo xìng",
+    "english": "glad",
+    "chars": [
+      "高",
+      "兴"
+    ]
+  },
+  {
+    "text": "生气",
+    "pinyin": "shēng qì",
+    "english": "angry",
+    "chars": [
+      "生",
+      "气"
+    ]
+  },
+  {
+    "text": "难过",
+    "pinyin": "nán guò",
+    "english": "sad",
+    "chars": [
+      "难",
+      "过"
+    ]
+  },
+  {
+    "text": "害怕",
+    "pinyin": "hài pà",
+    "english": "scared",
+    "chars": [
+      "害",
+      "怕"
+    ]
+  },
+  {
+    "text": "累",
+    "pinyin": "lèi",
+    "english": "tired",
+    "chars": [
+      "累"
+    ]
+  },
+  {
+    "text": "喜欢",
+    "pinyin": "xǐ huān",
+    "english": "like",
+    "chars": [
+      "喜",
+      "欢"
+    ]
+  },
+  {
+    "text": "不喜欢",
+    "pinyin": "bù xǐ huān",
+    "english": "dislike",
+    "chars": [
+      "不",
+      "喜",
+      "欢"
+    ]
+  },
+  {
+    "text": "玩游戏",
+    "pinyin": "wán yóu xì",
+    "english": "play games",
+    "chars": [
+      "玩",
+      "游",
+      "戏"
+    ]
+  },
+  {
+    "text": "唱歌",
+    "pinyin": "chàng gē",
+    "english": "sing",
+    "chars": [
+      "唱",
+      "歌"
+    ]
+  },
+  {
+    "text": "跳舞",
+    "pinyin": "tiào wǔ",
+    "english": "dance",
+    "chars": [
+      "跳",
+      "舞"
+    ]
+  },
+  {
+    "text": "画画",
+    "pinyin": "huà huà",
+    "english": "draw",
+    "chars": [
+      "画",
+      "画"
+    ]
+  },
+  {
+    "text": "看书",
+    "pinyin": "kàn shū",
+    "english": "read",
+    "chars": [
+      "看",
+      "书"
+    ]
+  },
+  {
+    "text": "写字",
+    "pinyin": "xiě zì",
+    "english": "write",
+    "chars": [
+      "写",
+      "字"
+    ]
+  },
+  {
+    "text": "上学",
+    "pinyin": "shàng xué",
+    "english": "go to school",
+    "chars": [
+      "上",
+      "学"
+    ]
+  },
+  {
+    "text": "回家",
+    "pinyin": "huí jiā",
+    "english": "go home",
+    "chars": [
+      "回",
+      "家"
+    ]
+  },
+  {
+    "text": "睡觉",
+    "pinyin": "shuì jiào",
+    "english": "sleep",
+    "chars": [
+      "睡",
+      "觉"
+    ]
+  },
+  {
+    "text": "起床",
+    "pinyin": "qǐ chuáng",
+    "english": "wake up",
+    "chars": [
+      "起",
+      "床"
+    ]
+  },
+  {
+    "text": "洗手",
+    "pinyin": "xǐ shǒu",
+    "english": "wash hands",
+    "chars": [
+      "洗",
+      "手"
+    ]
+  },
+  {
+    "text": "洗脸",
+    "pinyin": "xǐ liǎn",
+    "english": "wash face",
+    "chars": [
+      "洗",
+      "脸"
+    ]
+  },
+  {
+    "text": "洗澡",
+    "pinyin": "xǐ zǎo",
+    "english": "take a bath",
+    "chars": [
+      "洗",
+      "澡"
+    ]
+  },
+  {
+    "text": "公园",
+    "pinyin": "gōng yuán",
+    "english": "park",
+    "chars": [
+      "公",
+      "园"
+    ]
+  },
+  {
+    "text": "花园",
+    "pinyin": "huā yuán",
+    "english": "garden",
+    "chars": [
+      "花",
+      "园"
+    ]
+  },
+  {
+    "text": "树",
+    "pinyin": "shù",
+    "english": "tree",
+    "chars": [
+      "树"
+    ]
+  },
+  {
+    "text": "花",
+    "pinyin": "huā",
+    "english": "flower",
+    "chars": [
+      "花"
+    ]
+  },
+  {
+    "text": "草",
+    "pinyin": "cǎo",
+    "english": "grass",
+    "chars": [
+      "草"
+    ]
+  },
+  {
+    "text": "山",
+    "pinyin": "shān",
+    "english": "mountain",
+    "chars": [
+      "山"
+    ]
+  },
+  {
+    "text": "河",
+    "pinyin": "hé",
+    "english": "river",
+    "chars": [
+      "河"
+    ]
+  },
+  {
+    "text": "海",
+    "pinyin": "hǎi",
+    "english": "sea",
+    "chars": [
+      "海"
+    ]
+  },
+  {
+    "text": "桌子",
+    "pinyin": "zhuō zi",
+    "english": "table",
+    "chars": [
+      "桌",
+      "子"
+    ]
+  },
+  {
+    "text": "椅子",
+    "pinyin": "yǐ zi",
+    "english": "chair",
+    "chars": [
+      "椅",
+      "子"
+    ]
+  },
+  {
+    "text": "门",
+    "pinyin": "mén",
+    "english": "door",
+    "chars": [
+      "门"
+    ]
+  },
+  {
+    "text": "窗户",
+    "pinyin": "chuāng hu",
+    "english": "window",
+    "chars": [
+      "窗",
+      "户"
+    ]
+  },
+  {
+    "text": "灯",
+    "pinyin": "dēng",
+    "english": "lamp",
+    "chars": [
+      "灯"
+    ]
+  },
+  {
+    "text": "电话",
+    "pinyin": "diàn huà",
+    "english": "telephone",
+    "chars": [
+      "电",
+      "话"
+    ]
+  },
+  {
+    "text": "电脑",
+    "pinyin": "diàn nǎo",
+    "english": "computer",
+    "chars": [
+      "电",
+      "脑"
+    ]
+  },
+  {
+    "text": "电视",
+    "pinyin": "diàn shì",
+    "english": "television",
+    "chars": [
+      "电",
+      "视"
+    ]
+  },
+  {
+    "text": "衣服",
+    "pinyin": "yī fú",
+    "english": "clothes",
+    "chars": [
+      "衣",
+      "服"
+    ]
+  },
+  {
+    "text": "裤子",
+    "pinyin": "kù zi",
+    "english": "pants",
+    "chars": [
+      "裤",
+      "子"
+    ]
+  },
+  {
+    "text": "鞋子",
+    "pinyin": "xié zi",
+    "english": "shoes",
+    "chars": [
+      "鞋",
+      "子"
+    ]
+  },
+  {
+    "text": "帽子",
+    "pinyin": "mào zi",
+    "english": "hat",
+    "chars": [
+      "帽",
+      "子"
+    ]
+  },
+  {
+    "text": "红色",
+    "pinyin": "hóng sè",
+    "english": "red",
+    "chars": [
+      "红",
+      "色"
+    ]
+  },
+  {
+    "text": "蓝色",
+    "pinyin": "lán sè",
+    "english": "blue",
+    "chars": [
+      "蓝",
+      "色"
+    ]
+  },
+  {
+    "text": "黄色",
+    "pinyin": "huáng sè",
+    "english": "yellow",
+    "chars": [
+      "黄",
+      "色"
+    ]
+  },
+  {
+    "text": "绿色",
+    "pinyin": "lǜ sè",
+    "english": "green",
+    "chars": [
+      "绿",
+      "色"
+    ]
+  },
+  {
+    "text": "白色",
+    "pinyin": "bái sè",
+    "english": "white",
+    "chars": [
+      "白",
+      "色"
+    ]
+  },
+  {
+    "text": "黑色",
+    "pinyin": "hēi sè",
+    "english": "black",
+    "chars": [
+      "黑",
+      "色"
+    ]
+  },
+  {
+    "text": "大",
+    "pinyin": "dà",
+    "english": "big",
+    "chars": [
+      "大"
+    ]
+  },
+  {
+    "text": "小",
+    "pinyin": "xiǎo",
+    "english": "small",
+    "chars": [
+      "小"
+    ]
+  },
+  {
+    "text": "多",
+    "pinyin": "duō",
+    "english": "many",
+    "chars": [
+      "多"
+    ]
+  },
+  {
+    "text": "少",
+    "pinyin": "shǎo",
+    "english": "few",
+    "chars": [
+      "少"
+    ]
+  },
+  {
+    "text": "长",
+    "pinyin": "cháng",
+    "english": "long",
+    "chars": [
+      "长"
+    ]
+  },
+  {
+    "text": "短",
+    "pinyin": "duǎn",
+    "english": "short",
+    "chars": [
+      "短"
+    ]
+  },
+  {
+    "text": "高",
+    "pinyin": "gāo",
+    "english": "tall",
+    "chars": [
+      "高"
+    ]
+  },
+  {
+    "text": "矮",
+    "pinyin": "ǎi",
+    "english": "short (height)",
+    "chars": [
+      "矮"
+    ]
+  },
+  {
+    "text": "快",
+    "pinyin": "kuài",
+    "english": "fast",
+    "chars": [
+      "快"
+    ]
+  },
+  {
+    "text": "慢",
+    "pinyin": "màn",
+    "english": "slow",
+    "chars": [
+      "慢"
+    ]
+  },
+  {
+    "text": "好",
+    "pinyin": "hǎo",
+    "english": "good",
+    "chars": [
+      "好"
+    ]
+  },
+  {
+    "text": "坏",
+    "pinyin": "huài",
+    "english": "bad",
+    "chars": [
+      "坏"
+    ]
+  },
+  {
+    "text": "新",
+    "pinyin": "xīn",
+    "english": "new",
+    "chars": [
+      "新"
+    ]
+  },
+  {
+    "text": "旧",
+    "pinyin": "jiù",
+    "english": "old",
+    "chars": [
+      "旧"
+    ]
+  },
+  {
+    "text": "开",
+    "pinyin": "kāi",
+    "english": "open/start",
+    "chars": [
+      "开"
+    ]
+  },
+  {
+    "text": "关",
+    "pinyin": "guān",
+    "english": "close/shut",
+    "chars": [
+      "关"
+    ]
+  },
+  {
+    "text": "来",
+    "pinyin": "lái",
+    "english": "come",
+    "chars": [
+      "来"
+    ]
+  },
+  {
+    "text": "去",
+    "pinyin": "qù",
+    "english": "go",
+    "chars": [
+      "去"
+    ]
+  },
+  {
+    "text": "看",
+    "pinyin": "kàn",
+    "english": "look/watch",
+    "chars": [
+      "看"
+    ]
+  },
+  {
+    "text": "听",
+    "pinyin": "tīng",
+    "english": "listen",
+    "chars": [
+      "听"
+    ]
+  },
+  {
+    "text": "说",
+    "pinyin": "shuō",
+    "english": "speak",
+    "chars": [
+      "说"
+    ]
+  },
+  {
+    "text": "问",
+    "pinyin": "wèn",
+    "english": "ask",
+    "chars": [
+      "问"
+    ]
+  },
+  {
+    "text": "答",
+    "pinyin": "dá",
+    "english": "answer",
+    "chars": [
+      "答"
+    ]
+  },
+  {
+    "text": "给",
+    "pinyin": "gěi",
+    "english": "give",
+    "chars": [
+      "给"
+    ]
+  },
+  {
+    "text": "拿",
+    "pinyin": "ná",
+    "english": "take",
+    "chars": [
+      "拿"
+    ]
+  },
+  {
+    "text": "放",
+    "pinyin": "fàng",
+    "english": "put/place",
+    "chars": [
+      "放"
+    ]
+  },
+  {
+    "text": "做",
+    "pinyin": "zuò",
+    "english": "do/make",
+    "chars": [
+      "做"
+    ]
+  },
+  {
+    "text": "买",
+    "pinyin": "mǎi",
+    "english": "buy",
+    "chars": [
+      "买"
+    ]
+  },
+  {
+    "text": "卖",
+    "pinyin": "mài",
+    "english": "sell",
+    "chars": [
+      "卖"
+    ]
+  },
+  {
+    "text": "跑",
+    "pinyin": "pǎo",
+    "english": "run",
+    "chars": [
+      "跑"
+    ]
+  },
+  {
+    "text": "走",
+    "pinyin": "zǒu",
+    "english": "walk",
+    "chars": [
+      "走"
+    ]
+  },
+  {
+    "text": "跳",
+    "pinyin": "tiào",
+    "english": "jump",
+    "chars": [
+      "跳"
+    ]
+  },
+  {
+    "text": "坐",
+    "pinyin": "zuò",
+    "english": "sit",
+    "chars": [
+      "坐"
+    ]
+  },
+  {
+    "text": "站",
+    "pinyin": "zhàn",
+    "english": "stand",
+    "chars": [
+      "站"
+    ]
+  },
+  {
+    "text": "开始",
+    "pinyin": "kāi shǐ",
+    "english": "begin",
+    "chars": [
+      "开",
+      "始"
+    ]
+  },
+  {
+    "text": "结束",
+    "pinyin": "jié shù",
+    "english": "end",
+    "chars": [
+      "结",
+      "束"
+    ]
   }
 ]
