@@ -22,6 +22,12 @@
 
 <div class="score-box">🪙 积分: <span id="score-display">0</span></div>
 
+<div id="header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px;">
+    <button onclick="goBack()" style="background: #95a5a6; padding: 10px 20px; font-size: 16px;">🏠 返回地图</button>
+    
+    <div class="score-box">🪙 积分: <span id="score-display">0</span></div>
+</div>
+
 <div class="card">
     <h1 id="word-title">准备中...</h1>
     <p id="pinyin-display"></p>
@@ -97,6 +103,11 @@ const firebaseConfig = {
             width: 250, height: 250, padding: 15,
             showOutline: true, strokeColor: '#2ecc71'
         });
+
+function goBack() {
+    // 跳转回你的主页面
+    window.location.href = "index.html";
+}
 
         writer.quiz({
             onComplete: async function() {
