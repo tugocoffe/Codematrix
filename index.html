@@ -1,93 +1,116 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Code Matrix - 矩阵</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSLE 华文学习助手</title>
+    <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
     <style>
-        /* 1. 基础布局：让画布占满全屏 */
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden; /* 防止出现滚动条 */
-            background-color: black;
+        body { 
+            margin: 0; 
+            background: #f0f4f8; 
+            color: #333; 
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        canvas {
-            display: block;
-        }
-        /* 让文字浮在背景之上 */
-        .content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #00FF00;
-            font-family: monospace;
-            text-align: center;
-            pointer-events: none; /* 让鼠标穿透文字，不影响交互 */
-            text-shadow: 0 0 10px #00FF00;
-        }
+        #header { width: 100%; display: flex; justify-content: flex-end; padding: 15px; box-sizing: border-box; }
+        .score-box { background: #fff; padding: 8px 15px; border-radius: 20px; color: #f39c12; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .card { background: #fff; border-radius: 20px; padding: 30px 20px; width: 90%; max-width: 360px; text-align: center; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); margin-top: 20px; }
+        #word-display { font-size: 80px; color: #2c3e50; margin-bottom: 20px; }
+        #writer-container { width: 200px; height: 200px; margin: 20px auto; border: 1px solid #eee; background: #fafafa; }
+        #answer-area { display: none; }
+        button { background: #3498db; color: #fff; border: none; padding: 12px 30px; border-radius: 25px; font-size: 16px; cursor: pointer; }
+        #hint-text { margin-top: 10px; font-size: 14px; color: #7f8c8d; min-height: 20px; }
     </style>
 </head>
 <body>
 
-    <canvas id="matrix"></canvas>
+<div id="header">
+    <div class="score-box">🪙 积分: <span id="score">0</span></div>
+</div>
+
+<div class="card">
+    <div id="word-display">环境</div>
     
-    <div class="content">
-        <h1>Welcome to Codematrix.cc</h1>
-        <p>矩阵正在初始化...</p>
+    <div id="answer-area">
+        <p style="font-size: 20px; color: #7f8c8d; margin: 0;">huán jìng</p>
+        <div id="writer-container"></div>
+        <p id="hint-text">正在加载笔画...</p>
     </div>
+    
+    <button id="main-btn" onclick="handleAction()">查看答案并练习</button>
+</div>
 
-    <script>
-        const canvas = document.getElementById('matrix');
-        const ctx = canvas.getContext('2d');
+<script>
+    let score = parseInt(localStorage.getItem('psle_score')) || 0;
+    document.getElementById('score').innerText = score;
 
-        // 设置画布大小为浏览器窗口大小
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+    let writer;
+    const currentWord = "环"; // 先练习第一个字
 
-        // 定义要掉落的字符
-        const characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$+-*/=%'\"#&_(),.;:?!\\|{}<>[]^~";
-        const fontSize = 16;
-        const columns = canvas.width / fontSize; // 计算屏幕能容纳多少列
+    function handleAction() {
+        const btn = document.getElementById('main-btn');
+        const area = document.getElementById('answer-area');
 
-        // 用数组记录每一列字符当前的垂直位置
-        const drops = [];
-        for (let x = 0; x < columns; x++) {
-            drops[x] = 1; 
+        // 检查库是否加载
+        if (typeof HanziWriter === 'undefined') {
+            alert("笔画库加载失败，请检查网络连接！");
+            return;
         }
 
-        function draw() {
-            // 关键：绘制半透明黑色背景，产生拖尾效果
-            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.fillStyle = "#0F0"; // 矩阵绿
-            ctx.font = fontSize + "px monospace";
-
-            for (let i = 0; i < drops.length; i++) {
-                // 随机选取一个字符
-                const text = characters.charAt(Math.floor(Math.random() * characters.length));
-                // 绘制字符
-                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-                // 如果字符落出屏幕，或者随机概率触发，则重置回顶部
-                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                    drops[i] = 0;
-                }
-
-                // 增加位置
-                drops[i]++;
-            }
+        if (area.style.display === "none") {
+            area.style.display = "block";
+            btn.innerText = "开始书写测试";
+            document.getElementById('hint-text').innerText = "点击按钮开始练习";
+        } else if (btn.innerText === "开始书写测试") {
+            btn.style.display = "none";
+            startQuiz(currentWord);
+        } else {
+            location.reload();
         }
+    }
 
-        // 每 33 毫秒更新一次画面（约 30 帧/秒）
-        setInterval(draw, 33);
-
-        // 窗口大小改变时重置画布大小
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+    function startQuiz(char) {
+        document.getElementById('writer-container').innerHTML = '';
+        
+        // 创建实例
+        writer = HanziWriter.create('writer-container', char, {
+            width: 200,
+            height: 200,
+            padding: 10,
+            showOutline: true,
+            strokeAnimationSpeed: 1,
+            delayBetweenStrokes: 200
         });
-    </script>
+
+        document.getElementById('hint-text').innerText = "请按照顺序书写笔画";
+
+        // 开启测试
+        writer.quiz({
+            onCorrectStroke: function() {
+                document.getElementById('hint-text').innerText = "不错！继续下一笔...";
+                document.getElementById('hint-text').style.color = "green";
+            },
+            onMistake: function() {
+                document.getElementById('hint-text').innerText = "笔顺不对，再试一次";
+                document.getElementById('hint-text').style.color = "red";
+            },
+            onComplete: function() {
+                document.getElementById('hint-text').innerText = "太棒了！积分 +10";
+                score += 10;
+                document.getElementById('score').innerText = score;
+                localStorage.setItem('psle_score', score);
+                
+                setTimeout(() => {
+                    const btn = document.getElementById('main-btn');
+                    btn.style.display = "inline-block";
+                    btn.innerText = "完成练习";
+                }, 1000);
+            }
+        });
+    }
+</script>
 </body>
 </html>
