@@ -11,15 +11,21 @@
     
     <style>
         body { margin: 0; background: #e8f5e9; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
+        /* 顶部状态栏：包含返回键和积分 🏠🪙 */
         #header { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 15px; box-sizing: border-box; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .back-btn { background: #95a5a6; color: white; border: none; padding: 8px 15px; border-radius: 10px; cursor: pointer; font-size: 14px; }
+        .back-btn { background: #95a5a6; color: white; border: none; padding: 8px 15px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: bold; }
         .score-box { background: #fff3e0; padding: 8px 15px; border-radius: 20px; color: #e67e22; font-weight: bold; border: 1px solid #ffe0b2; }
+        
+        /* 学习卡片 🃏 */
         .card { background: white; border-radius: 20px; padding: 25px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-top: 20px; }
         #word-title { font-size: 48px; color: #2c3e50; margin: 10px 0; }
         #pinyin-display { color: #7f8c8d; font-size: 20px; margin: 5px 0; }
-        #english-display { color: #3498db; font-size: 18px; margin-bottom: 20px; }
-        #writer-canvas { width: 250px; height: 250px; margin: 0 auto 20px; border: 1px solid #eee; border-radius: 10px; }
+        #english-display { color: #3498db; font-size: 18px; margin-bottom: 20px; font-weight: bold; }
+        
+        /* 书写区域 ✍️ */
+        #writer-canvas { width: 250px; height: 250px; margin: 0 auto 20px; border: 1px solid #eee; border-radius: 10px; background: #fff; }
         #status-msg { height: 24px; font-weight: bold; margin-bottom: 15px; }
+        
         .controls { display: flex; gap: 10px; justify-content: center; }
         .btn { border: none; padding: 12px 25px; border-radius: 25px; font-size: 16px; cursor: pointer; font-weight: bold; transition: 0.3s; }
         .btn-demo { background: #3498db; color: white; }
@@ -48,8 +54,7 @@
 </div>
 
 <script>
-    // --- 1. 配置区 ---
-
+    // --- 2. Firebase 配置 (请填入你自己的配置) ---
 const firebaseConfig = {
   apiKey: "AIzaSyAs5UvfZ79S8BEnCz3z7C_nyBlZgSfb8z0",
   authDomain: "psle-adventure.firebaseapp.com",
@@ -58,6 +63,7 @@ const firebaseConfig = {
   messagingSenderId: "803923279070",
   appId: "1:803923279070:web:55d629ecb9593c0249164f"
 };
+
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
@@ -68,16 +74,17 @@ const firebaseConfig = {
     let writer;
     let userDocRef = null;
 
-    // --- 2. 身份识别与监听 ---
+    // --- 3. 登录检查与云端连接 ---
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             userDocRef = db.collection('users').doc(user.uid);
-            // 实时监听积分变化
+            // 实时同步云端积分
             userDocRef.onSnapshot(doc => {
                 if (doc.exists) document.getElementById('score-display').innerText = doc.data().score || 0;
             });
             await loadWordsFromFile();
         } else {
+            // 没登录则跳回主页
             location.href = "index.html"; 
         }
     });
@@ -88,11 +95,11 @@ const firebaseConfig = {
             wordList = await response.json();
             displayWord();
         } catch (e) {
-            updateStatus("词库文件加载失败", "red");
+            updateStatus("词库加载失败，请检查 words.json", "red");
         }
     }
 
-    // --- 3. 学习逻辑 ---
+    // --- 4. 核心交互逻辑 ---
     function displayWord() {
         const word = wordList[currentWordIdx];
         document.getElementById('word-title').innerText = word.text;
@@ -114,6 +121,7 @@ const firebaseConfig = {
         writer.quiz({
             onComplete: async function() {
                 const currentWord = wordList[currentWordIdx];
+                // 如果写完的是词语的最后一个字
                 if (currentCharIdx === currentWord.chars.length - 1) {
                     await handleWordComplete(currentWord.text);
                 } else {
@@ -125,12 +133,13 @@ const firebaseConfig = {
         });
     }
 
-    // --- 4. 数据库同步 ---
+    // --- 5. 云端更新逻辑 ---
     async function handleWordComplete(wordText) {
         updateStatus(`✅ 完成词语！积分 +10`, "#f39c12");
         document.getElementById('next-btn').style.display = "inline-block";
 
         if (userDocRef) {
+            // 同时更新积分和已学单词列表
             await userDocRef.update({
                 score: firebase.firestore.FieldValue.increment(10),
                 learnedWords: firebase.firestore.FieldValue.arrayUnion(wordText)
