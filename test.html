@@ -109,7 +109,7 @@
         }
 
         const word = testQueue[currentIdx];
-        const options = [word.text, "木", "水", "火"].sort(() => Math.random() - 0.5); 
+        const options = [word.pinyin, "木", "水", "火"].sort(() => Math.random() - 0.5); 
 
         document.getElementById('game-container').innerHTML = `
             <h3>第 ${currentIdx + 1} / 5 题</h3>
