@@ -3,32 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>识字森林 - 智能练习</title>
+    <title>识字森林 - 智能同步版</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+    
     <style>
-        body { margin: 0; background: #e8f5e9; font-family: sans-serif; text-align: center; }
-        #word-display { font-size: 100px; margin: 50px; color: #2e7d32; }
-        .btn-group { display: flex; justify-content: center; gap: 20px; }
-        button { padding: 15px 30px; font-size: 20px; cursor: pointer; border-radius: 10px; border: none; }
-        #btn-correct { background: #4caf50; color: white; }
-        #btn-wrong { background: #f44336; color: white; }
-        #status { margin-top: 20px; color: #666; }
+        /* 这里保留你之前的 CSS 样式 */
+        body { margin: 0; background: #f0f4f8; display: flex; flex-direction: column; align-items: center; font-family: sans-serif; }
+        .score-box { position: absolute; top: 10px; right: 10px; background: #fff; padding: 10px; border-radius: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .card { background: #fff; border-radius: 20px; padding: 25px; width: 90%; max-width: 400px; text-align: center; margin-top: 50px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        #writer-canvas { width: 250px; height: 250px; margin: 20px auto; border: 1px solid #eee; }
+        #status-msg { height: 24px; font-weight: bold; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-<div id="status">正在同步云端进度...</div>
-<div id="word-display">加载中...</div>
+<div class="score-box">🪙 积分: <span id="score-display">0</span></div>
 
-<div class="btn-group">
-    <button id="btn-wrong" onclick="submitResult(false)">我不认识 ❌</button>
-    <button id="btn-correct" onclick="submitResult(true)">我认识 ✅</button>
+<div class="card">
+    <h1 id="word-title">准备中...</h1>
+    <p id="pinyin-display"></p>
+    <p id="english-display" style="color: #3498db; font-weight: bold;"></p>
+    
+    <div id="writer-canvas"></div>
+    <div id="status-msg">正在加载云端数据...</div>
+    
+    <button id="next-btn" style="display:none;" onclick="nextWord()">下一个词 ➡️</button>
 </div>
 
 <script>
-    // 1. 粘贴你的 Firebase 配置
+    // --- 1. 配置区 ---
+
 const firebaseConfig = {
   apiKey: "AIzaSyAs5UvfZ79S8BEnCz3z7C_nyBlZgSfb8z0",
   authDomain: "psle-adventure.firebaseapp.com",
@@ -37,76 +44,101 @@ const firebaseConfig = {
   messagingSenderId: "803923279070",
   appId: "1:803923279070:web:55d629ecb9593c0249164f"
 };
-
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // 所有的字库（你可以根据需要扩充）
-    const allWords = ["老师", "学校", "朋友", "学习", "快乐", "跑步", "游戏", "画画"];
-    let userData = { score: 0, wordStats: {} }; // wordStats: { "老师": { wrongCount: 2, learned: true } }
-    let currentWord = "";
+    let wordList = [];
+    let currentWordIdx = 0;
+    let currentCharIdx = 0;
+    let writer;
+    let userDocRef = null;
 
-    // 检查登录并加载数据
-    auth.onAuthStateChanged(user => {
+    // --- 2. 身份识别与数据加载 ---
+    auth.onAuthStateChanged(async (user) => {
         if (user) {
-            loadData(user.uid);
+            userDocRef = db.collection('users').doc(user.uid);
+            // 实时监听云端积分
+            userDocRef.onSnapshot(doc => {
+                if (doc.exists) {
+                    document.getElementById('score-display').innerText = doc.data().score || 0;
+                }
+            });
+            await loadWordsFromFile();
         } else {
-            window.location.href = "index.html"; // 没登录就踢回主页
+            window.location.href = "index.html"; 
         }
     });
 
-    async function loadData(uid) {
-        const doc = await db.collection('users').doc(uid).get();
-        if (doc.exists) {
-            userData = doc.data();
-            if (!userData.wordStats) userData.wordStats = {};
+    async function loadWordsFromFile() {
+        try {
+            const response = await fetch('words.json');
+            wordList = await response.json();
+            startLearning();
+        } catch (e) {
+            updateStatus("加载词库失败，请检查 words.json", "red");
         }
-        document.getElementById('status').innerText = `当前积分: ${userData.score || 0} | 准备练习`;
-        nextWord();
     }
 
-    // 🧠 智能出题算法
-    function nextWord() {
-        // 筛选出“常错字”（错误次数 > 0）和“还没学过的字”
-        let priorityWords = allWords.filter(w => {
-            const stat = userData.wordStats[w];
-            return !stat || stat.wrongCount > 0;
+    // --- 3. 核心学习逻辑 ---
+    function startLearning() {
+        const word = wordList[currentWordIdx];
+        document.getElementById('word-title').innerText = word.text;
+        document.getElementById('pinyin-display').innerText = word.pinyin;
+        document.getElementById('english-display').innerText = word.english;
+        loadChar(word.chars[currentCharIdx]);
+    }
+
+    function loadChar(char) {
+        document.getElementById('writer-canvas').innerHTML = '';
+        updateStatus(`请写出 "${char}"`, "#3498db");
+
+        writer = HanziWriter.create('writer-canvas', char, {
+            width: 250, height: 250, padding: 15,
+            showOutline: true, strokeColor: '#2ecc71'
         });
 
-        // 如果大家都学会了，就从全库随机
-        let pool = priorityWords.length > 0 ? priorityWords : allWords;
-        currentWord = pool[Math.floor(Math.random() * pool.length)];
-        
-        document.getElementById('word-display').innerText = currentWord;
+        writer.quiz({
+            onComplete: async function() {
+                const currentWord = wordList[currentWordIdx];
+                
+                // 判断是否写完了词语中的最后一个字
+                if (currentCharIdx === currentWord.chars.length - 1) {
+                    await handleWordComplete(currentWord.text);
+                } else {
+                    updateStatus("好棒！下一个字...", "#2ecc71");
+                    currentCharIdx++;
+                    setTimeout(() => loadChar(currentWord.chars[currentCharIdx]), 1000);
+                }
+            }
+        });
     }
 
-    // 💾 提交结果到云端
-    async function submitResult(isCorrect) {
-        const uid = auth.currentUser.uid;
-        if (!userData.wordStats[currentWord]) {
-            userData.wordStats[currentWord] = { wrongCount: 0, correctCount: 0 };
-        }
+    // --- 4. 云端汇报 ---
+    async function handleWordComplete(wordText) {
+        updateStatus(`✅ 完成词语！积分 +10`, "#f39c12");
+        document.getElementById('next-btn').style.display = "inline-block";
 
-        if (isCorrect) {
-            userData.score = (userData.score || 0) + 10;
-            userData.wordStats[currentWord].correctCount++;
-            // 如果连续答对，可以减少错误计数
-            if (userData.wordStats[currentWord].wrongCount > 0) {
-                userData.wordStats[currentWord].wrongCount--;
-            }
-        } else {
-            userData.wordStats[currentWord].wrongCount++;
-            // 答错不扣分，但也不加分
+        if (userDocRef) {
+            await userDocRef.update({
+                score: firebase.firestore.FieldValue.increment(10),
+                learnedWords: firebase.firestore.FieldValue.arrayUnion(wordText)
+            });
         }
+    }
 
-        // 同步到 Firestore
-        await db.collection('users').doc(uid).set(userData, { merge: true });
-        
-        document.getElementById('status').innerText = `积分 +${isCorrect ? 10 : 0}！保存成功...`;
-        nextWord();
+    function nextWord() {
+        document.getElementById('next-btn').style.display = "none";
+        currentWordIdx = (currentWordIdx + 1) % wordList.length;
+        currentCharIdx = 0;
+        startLearning();
+    }
+
+    function updateStatus(msg, color) {
+        const el = document.getElementById('status-msg');
+        el.innerText = msg;
+        el.style.color = color;
     }
 </script>
-
 </body>
 </html>
