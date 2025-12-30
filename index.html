@@ -3,134 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PSLE 华文学习助手 - 完整版</title>
-    <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+    <title>PSLE 华文冒险岛</title>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore-compat.js"></script>
+    
     <style>
-        body { margin: 0; background: #f0f4f8; color: #333; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
-        #header { width: 100%; display: flex; justify-content: flex-end; padding: 15px; box-sizing: border-box; }
-        .score-box { background: #fff; padding: 8px 15px; border-radius: 20px; color: #f39c12; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .card { background: #fff; border-radius: 20px; padding: 30px 20px; width: 90%; max-width: 360px; text-align: center; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); margin-top: 20px; }
-        #word-title { font-size: 60px; color: #2c3e50; margin: 0; }
-        #pinyin-display { color: #7f8c8d; font-size: 20px; margin: 10px 0; }
-        #english-display { color: #3498db; font-size: 18px; font-weight: bold; margin-bottom: 15px; }
-        #writer-canvas { width: 250px; height: 250px; margin: 15px auto; border: 1px solid #e0e0e0; background: #fff; border-radius: 10px; }
-        #practice-zone { display: none; }
-        button { background: #3498db; color: #fff; border: none; padding: 15px 40px; border-radius: 30px; font-size: 18px; cursor: pointer; }
-        #status-msg { margin-top: 15px; font-size: 16px; font-weight: bold; min-height: 24px; }
+        body { 
+            margin: 0; background: #a2d2ff; font-family: 'Comic Sans MS', cursive, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; 
+        }
+        /* 顶部用户状态栏 */
+        #user-bar { 
+            width: 100%; background: rgba(255, 255, 255, 0.9); padding: 15px 20px; 
+            display: flex; justify-content: space-between; align-items: center;
+            box-sizing: border-box; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .user-name { font-weight: bold; color: #2c3e50; }
+        .user-score { color: #f39c12; font-size: 1.2em; font-weight: bold; }
+
+        /* 游戏地图区域 */
+        .map-container { 
+            width: 90%; max-width: 450px; height: 600px; 
+            background: #fdf0d5; border: 10px solid #6d6875; 
+            border-radius: 30px; margin-top: 30px; position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .node { 
+            position: absolute; padding: 20px; background: white; 
+            border-radius: 50%; border: 4px solid #ff99c8; 
+            text-decoration: none; color: #333; font-weight: bold;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .node:hover { transform: scale(1.1); }
+        
+        /* 按钮样式 */
+        .btn-auth {
+            background: #4285F4; color: white; border: none; 
+            padding: 10px 20px; border-radius: 20px; cursor: pointer;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
-<div id="header">
-    <div class="score-box">🪙 积分: <span id="score-display">0</span></div>
+<div id="user-bar">
+    <div class="user-name" id="user-display">👤 游客模式</div>
+    <div class="user-score" id="score-display">🪙 积分: 0</div>
+    <button class="btn-auth" id="auth-btn" onclick="handleAuth()">Google 登录</button>
 </div>
 
-<div class="card">
-    <h1 id="word-title">加载中...</h1>
-    <div id="practice-zone">
-        <p id="pinyin-display"></p>
-        <p id="english-display"></p>
-        <div id="writer-canvas"></div>
-        <div id="status-msg"></div>
-    </div>
-    <button id="action-btn" onclick="startLearning()">查看答案并练习</button>
+<div class="map-container">
+    <a href="vocabulary.html" class="node" style="top: 15%; left: 15%;">🌲 识字森林</a>
+    
+    <div class="node" style="top: 45%; right: 10%; opacity: 0.6; background: #eee;">🏛️ 测试神庙</div>
+    <div class="node" style="bottom: 15%; left: 30%; opacity: 0.6; background: #eee;">💰 积分宝库</div>
 </div>
 
 <script>
-    let wordList = []; // 存储从文件读取的单词
-    let currentWordIdx = 0;
-    let currentCharIdx = 0;
-    let currentScore = parseInt(localStorage.getItem('psle_score')) || 0;
-    let writer;
+    // 1. 请粘贴你从 Firebase 获取的完整配置对象
+const firebaseConfig = {
+  apiKey: "AIzaSyAs5UvfZ79S8BEnCz3z7C_nyBlZgSfb8z0",
+  authDomain: "psle-adventure.firebaseapp.com",
+  projectId: "psle-adventure",
+  storageBucket: "psle-adventure.firebasestorage.app",
+  messagingSenderId: "803923279070",
+  appId: "1:803923279070:web:55d629ecb9593c0249164f"
+};
 
-    document.getElementById('score-display').innerText = currentScore;
+    // 初始化 Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const googleProvider = new firebase.auth.GoogleAuthProvider(); // 设置 Google 登录
 
-    // --- 第一步：从外部 JSON 文件读取数据 ---
-    async function loadWordsFromFile() {
-        try {
-            const response = await fetch('words.json'); // 这里的名字要和你的文件一致
-            wordList = await response.json();
-            // 初始化显示第一个词（但不展示答案）
-            document.getElementById('word-title').innerText = wordList[0].text;
-        } catch (error) {
-            console.error("加载词库失败:", error);
-            document.getElementById('word-title').innerText = "加载失败";
+    // 处理登录和退出
+    async function handleAuth() {
+        if (auth.currentUser) {
+            await auth.signOut();
+        } else {
+            try {
+                // 弹出 Google 登录窗口
+                await auth.signInWithPopup(googleProvider);
+            } catch (error) {
+                console.error("登录出错:", error);
+                alert("登录遇到问题，请检查 Firebase 控制台是否开启了 Google 登录。");
+            }
         }
     }
 
-    // 页面加载时自动运行读取函数
-    loadWordsFromFile();
+    // 监听登录状态的变化
+    auth.onAuthStateChanged(user => {
+        const userDisplay = document.getElementById('user-display');
+        const authBtn = document.getElementById('auth-btn');
+        const scoreDisplay = document.getElementById('score-display');
 
-    function startLearning() {
-        const word = wordList[currentWordIdx];
-        document.getElementById('pinyin-display').innerText = word.pinyin;
-        document.getElementById('english-display').innerText = word.english; // 显示英语解释
-        
-        document.getElementById('practice-zone').style.display = "block";
-        document.getElementById('action-btn').style.display = "none";
-        
-        loadChar(word.chars[currentCharIdx]);
-    }
+        if (user) {
+            userDisplay.innerText = "👤 " + user.displayName;
+            authBtn.innerText = "退出登录";
+            authBtn.style.background = "#e74c3c";
+            loadUserData(user.uid); // 登录成功后加载云端积分
+        } else {
+            userDisplay.innerText = "👤 游客模式";
+            authBtn.innerText = "Google 登录";
+            authBtn.style.background = "#4285F4";
+            scoreDisplay.innerText = "🪙 积分: 0";
+        }
+    });
 
-    function loadChar(char) {
-        document.getElementById('writer-canvas').innerHTML = ''; 
-        updateStatus("请写出“" + char + "”", "#3498db");
-
-        writer = HanziWriter.create('writer-canvas', char, {
-            width: 250, height: 250, padding: 15,
-            showOutline: true,
-            strokeColor: '#2ecc71',
-            drawingColor: '#3498db'
-        });
-
-        writer.quiz({
-            onCorrectStroke: () => updateStatus("对啦！下一笔...", "#2ecc71"),
-            onMistake: () => updateStatus("不对哦，再试一次", "#e74c3c"),
-            onComplete: function() {
-                currentScore += 10;
-                saveScore();
-                updateStatus("太棒了！积分 +10 🪙", "#f39c12");
-
-                currentCharIdx++; 
-                const currentWord = wordList[currentWordIdx];
-                
-                if (currentCharIdx < currentWord.chars.length) {
-                    setTimeout(() => loadChar(currentWord.chars[currentCharIdx]), 1500);
-                } else {
-                    setTimeout(() => nextWord(), 1500);
-                }
+    // 从 Firestore 加载积分
+    function loadUserData(uid) {
+        // 实时监听用户文档的变化
+        db.collection('users').doc(uid).onSnapshot(doc => {
+            if (doc.exists) {
+                document.getElementById('score-display').innerText = "🪙 积分: " + (doc.data().score || 0);
+            } else {
+                // 如果是第一次玩的新用户，创建一个档案
+                db.collection('users').doc(uid).set({ 
+                    name: auth.currentUser.displayName,
+                    score: 0 
+                });
             }
         });
     }
-
-    function nextWord() {
-        currentWordIdx++;
-        currentCharIdx = 0;
-
-        if (currentWordIdx >= wordList.length) {
-            currentWordIdx = 0;
-            updateStatus("全部练习完成！重新开始...", "#9b59b6");
-        } else {
-            updateStatus("解锁新词语！", "#2ecc71");
-        }
-
-        const newWord = wordList[currentWordIdx];
-        document.getElementById('word-title').innerText = newWord.text;
-        document.getElementById('pinyin-display').innerText = newWord.pinyin;
-        document.getElementById('english-display').innerText = newWord.english;
-        loadChar(newWord.chars[0]);
-    }
-
-    function updateStatus(msg, color) {
-        const el = document.getElementById('status-msg');
-        el.innerText = msg;
-        el.style.color = color;
-    }
-
-    function saveScore() {
-        document.getElementById('score-display').innerText = currentScore;
-        localStorage.setItem('psle_score', currentScore);
-    }
 </script>
+
 </body>
 </html>
