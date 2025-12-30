@@ -3,113 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PSLE 华文学习助手</title>
+    <title>PSLE 华文学习助手 - 完整版</title>
     <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
     <style>
-        body { 
-            margin: 0; 
-            background: #f0f4f8; 
-            color: #333; 
-            font-family: sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+        body { margin: 0; background: #f0f4f8; color: #333; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
         #header { width: 100%; display: flex; justify-content: flex-end; padding: 15px; box-sizing: border-box; }
         .score-box { background: #fff; padding: 8px 15px; border-radius: 20px; color: #f39c12; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .card { background: #fff; border-radius: 20px; padding: 30px 20px; width: 90%; max-width: 360px; text-align: center; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); margin-top: 20px; }
-        #word-display { font-size: 80px; color: #2c3e50; margin-bottom: 20px; }
-        #writer-container { width: 200px; height: 200px; margin: 20px auto; border: 1px solid #eee; background: #fafafa; }
-        #answer-area { display: none; }
-        button { background: #3498db; color: #fff; border: none; padding: 12px 30px; border-radius: 25px; font-size: 16px; cursor: pointer; }
-        #hint-text { margin-top: 10px; font-size: 14px; color: #7f8c8d; min-height: 20px; }
+        #word-title { font-size: 60px; color: #2c3e50; margin: 0; }
+        #pinyin-display { color: #7f8c8d; font-size: 20px; margin: 10px 0; }
+        #english-display { color: #3498db; font-size: 18px; font-weight: bold; margin-bottom: 15px; }
+        #writer-canvas { width: 250px; height: 250px; margin: 15px auto; border: 1px solid #e0e0e0; background: #fff; border-radius: 10px; }
+        #practice-zone { display: none; }
+        button { background: #3498db; color: #fff; border: none; padding: 15px 40px; border-radius: 30px; font-size: 18px; cursor: pointer; }
+        #status-msg { margin-top: 15px; font-size: 16px; font-weight: bold; min-height: 24px; }
     </style>
 </head>
 <body>
 
 <div id="header">
-    <div class="score-box">🪙 积分: <span id="score">0</span></div>
+    <div class="score-box">🪙 积分: <span id="score-display">0</span></div>
 </div>
 
 <div class="card">
-    <div id="word-display">环境</div>
-    
-    <div id="answer-area">
-        <p style="font-size: 20px; color: #7f8c8d; margin: 0;">huán jìng</p>
-        <div id="writer-container"></div>
-        <p id="hint-text">正在加载笔画...</p>
+    <h1 id="word-title">加载中...</h1>
+    <div id="practice-zone">
+        <p id="pinyin-display"></p>
+        <p id="english-display"></p>
+        <div id="writer-canvas"></div>
+        <div id="status-msg"></div>
     </div>
-    
-    <button id="main-btn" onclick="handleAction()">查看答案并练习</button>
+    <button id="action-btn" onclick="startLearning()">查看答案并练习</button>
 </div>
 
 <script>
-    let score = parseInt(localStorage.getItem('psle_score')) || 0;
-    document.getElementById('score').innerText = score;
-
+    let wordList = []; // 存储从文件读取的单词
+    let currentWordIdx = 0;
+    let currentCharIdx = 0;
+    let currentScore = parseInt(localStorage.getItem('psle_score')) || 0;
     let writer;
-    const currentWord = "环"; // 先练习第一个字
 
-    function handleAction() {
-        const btn = document.getElementById('main-btn');
-        const area = document.getElementById('answer-area');
+    document.getElementById('score-display').innerText = currentScore;
 
-        // 检查库是否加载
-        if (typeof HanziWriter === 'undefined') {
-            alert("笔画库加载失败，请检查网络连接！");
-            return;
-        }
-
-        if (area.style.display === "none") {
-            area.style.display = "block";
-            btn.innerText = "开始书写测试";
-            document.getElementById('hint-text').innerText = "点击按钮开始练习";
-        } else if (btn.innerText === "开始书写测试") {
-            btn.style.display = "none";
-            startQuiz(currentWord);
-        } else {
-            location.reload();
+    // --- 第一步：从外部 JSON 文件读取数据 ---
+    async function loadWordsFromFile() {
+        try {
+            const response = await fetch('words.json'); // 这里的名字要和你的文件一致
+            wordList = await response.json();
+            // 初始化显示第一个词（但不展示答案）
+            document.getElementById('word-title').innerText = wordList[0].text;
+        } catch (error) {
+            console.error("加载词库失败:", error);
+            document.getElementById('word-title').innerText = "加载失败";
         }
     }
 
-    function startQuiz(char) {
-        document.getElementById('writer-container').innerHTML = '';
+    // 页面加载时自动运行读取函数
+    loadWordsFromFile();
+
+    function startLearning() {
+        const word = wordList[currentWordIdx];
+        document.getElementById('pinyin-display').innerText = word.pinyin;
+        document.getElementById('english-display').innerText = word.english; // 显示英语解释
         
-        // 创建实例
-        writer = HanziWriter.create('writer-container', char, {
-            width: 200,
-            height: 200,
-            padding: 10,
+        document.getElementById('practice-zone').style.display = "block";
+        document.getElementById('action-btn').style.display = "none";
+        
+        loadChar(word.chars[currentCharIdx]);
+    }
+
+    function loadChar(char) {
+        document.getElementById('writer-canvas').innerHTML = ''; 
+        updateStatus("请写出“" + char + "”", "#3498db");
+
+        writer = HanziWriter.create('writer-canvas', char, {
+            width: 250, height: 250, padding: 15,
             showOutline: true,
-            strokeAnimationSpeed: 1,
-            delayBetweenStrokes: 200
+            strokeColor: '#2ecc71',
+            drawingColor: '#3498db'
         });
 
-        document.getElementById('hint-text').innerText = "请按照顺序书写笔画";
-
-        // 开启测试
         writer.quiz({
-            onCorrectStroke: function() {
-                document.getElementById('hint-text').innerText = "不错！继续下一笔...";
-                document.getElementById('hint-text').style.color = "green";
-            },
-            onMistake: function() {
-                document.getElementById('hint-text').innerText = "笔顺不对，再试一次";
-                document.getElementById('hint-text').style.color = "red";
-            },
+            onCorrectStroke: () => updateStatus("对啦！下一笔...", "#2ecc71"),
+            onMistake: () => updateStatus("不对哦，再试一次", "#e74c3c"),
             onComplete: function() {
-                document.getElementById('hint-text').innerText = "太棒了！积分 +10";
-                score += 10;
-                document.getElementById('score').innerText = score;
-                localStorage.setItem('psle_score', score);
+                currentScore += 10;
+                saveScore();
+                updateStatus("太棒了！积分 +10 🪙", "#f39c12");
+
+                currentCharIdx++; 
+                const currentWord = wordList[currentWordIdx];
                 
-                setTimeout(() => {
-                    const btn = document.getElementById('main-btn');
-                    btn.style.display = "inline-block";
-                    btn.innerText = "完成练习";
-                }, 1000);
+                if (currentCharIdx < currentWord.chars.length) {
+                    setTimeout(() => loadChar(currentWord.chars[currentCharIdx]), 1500);
+                } else {
+                    setTimeout(() => nextWord(), 1500);
+                }
             }
         });
+    }
+
+    function nextWord() {
+        currentWordIdx++;
+        currentCharIdx = 0;
+
+        if (currentWordIdx >= wordList.length) {
+            currentWordIdx = 0;
+            updateStatus("全部练习完成！重新开始...", "#9b59b6");
+        } else {
+            updateStatus("解锁新词语！", "#2ecc71");
+        }
+
+        const newWord = wordList[currentWordIdx];
+        document.getElementById('word-title').innerText = newWord.text;
+        document.getElementById('pinyin-display').innerText = newWord.pinyin;
+        document.getElementById('english-display').innerText = newWord.english;
+        loadChar(newWord.chars[0]);
+    }
+
+    function updateStatus(msg, color) {
+        const el = document.getElementById('status-msg');
+        el.innerText = msg;
+        el.style.color = color;
+    }
+
+    function saveScore() {
+        document.getElementById('score-display').innerText = currentScore;
+        localStorage.setItem('psle_score', currentScore);
     }
 </script>
 </body>
