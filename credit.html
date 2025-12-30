@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>积分宝库 - 荣誉殿堂</title>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        body { margin: 0; background: #f1f8e9; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding-bottom: 50px; }
+        #header { width: 100%; display: flex; justify-content: space-between; padding: 15px; box-sizing: border-box; background: white; }
+        
+        /* 进度条样式 📏 */
+        .progress-container { width: 90%; max-width: 400px; background: #e0e0e0; border-radius: 20px; height: 25px; margin: 20px 0; position: relative; overflow: hidden; }
+        #progress-bar { height: 100%; background: linear-gradient(90deg, #4caf50, #8bc34a); width: 0%; transition: width 1s ease; }
+        #score-text { margin-top: 5px; font-weight: bold; color: #2e7d32; }
+
+        /* 勋章列表样式 🏅 */
+        .honor-list { width: 90%; max-width: 400px; }
+        .honor-card { display: flex; align-items: center; padding: 15px; margin-bottom: 15px; border-radius: 15px; background: white; transition: 0.3s; }
+        
+        /* 🔒 锁定状态 */
+        .locked { filter: grayscale(100%); opacity: 0.5; border: 2px dashed #ccc; }
+        /* ✨ 解锁状态 */
+        .unlocked { border: 2px solid #4caf50; box-shadow: 0 4px 10px rgba(76, 175, 80, 0.2); }
+
+        .icon { font-size: 40px; margin-right: 20px; }
+        .info { flex-grow: 1; }
+        .name { font-size: 18px; font-weight: bold; }
+        .req { font-size: 12px; color: #888; }
+    </style>
+</head>
+<body>
+
+<div id="header">
+    <button onclick="location.href='index.html'" style="padding:8px 15px; border-radius:10px; border:none; background:#95a5a6; color:white; cursor:pointer;">🏠 返回地图</button>
+    <div style="font-weight:bold; color:#2e7d32;">当前积分: <span id="user-score">0</span></div>
+</div>
+
+<h2 style="color: #2e7d32; margin-top: 30px;">🌲 森林荣誉殿堂</h2>
+
+<div class="progress-container">
+    <div id="progress-bar"></div>
+</div>
+<div id="score-text">加载中...</div>
+
+<div id="honor-list" class="honor-list">
+    </div>
+
+<script>
+    // --- 1. Firebase 配置 (请填入你的配置) ---
+  
+    const firebaseConfig = {
+  apiKey: "AIzaSyAs5UvfZ79S8BEnCz3z7C_nyBlZgSfb8z0",
+  authDomain: "psle-adventure.firebaseapp.com",
+  projectId: "psle-adventure",
+  storageBucket: "psle-adventure.firebasestorage.app",
+  messagingSenderId: "803923279070",
+  appId: "1:803923279070:web:55d629ecb9593c0249164f"
+};
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // 荣誉等级定义
+    const levels = [
+        { min: 0,   name: "识字萌芽", icon: "🌱" },
+        { min: 50,  name: "森林向导", icon: "🧭" },
+        { min: 100, name: "护林小卫士", icon: "🛡️" },
+        { min: 200, name: "森林之王", icon: "👑" }
+    ];
+
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            db.collection('users').doc(user.uid).onSnapshot(doc => {
+                if (doc.exists) {
+                    const score = doc.data().score || 0;
+                    updateUI(score);
+                }
+            });
+        } else {
+            location.href = "index.html";
+        }
+    });
+
+    function updateUI(score) {
+        document.getElementById('user-score').innerText = score;
+        
+        // 更新进度条 (假设满分为 250)
+        const progress = Math.min((score / 250) * 100, 100);
+        document.getElementById('progress-bar').style.width = progress + "%";
+        
+        // 找出距离下一级的差分
+        const nextLevel = levels.find(l => l.min > score);
+        if (nextLevel) {
+            document.getElementById('score-text').innerText = `再拿 ${nextLevel.min - score} 分就能解锁【${nextLevel.name}】啦！`;
+        } else {
+            document.getElementById('score-text').innerText = "你已经是最高等级的森林之王了！👑";
+        }
+
+        // 渲染勋章列表
+        const list = document.getElementById('honor-list');
+        list.innerHTML = "";
+        levels.forEach(lvl => {
+            const isUnlocked = score >= lvl.min;
+            list.innerHTML += `
+                <div class="honor-card ${isUnlocked ? 'unlocked' : 'locked'}">
+                    <div class="icon">${lvl.icon}</div>
+                    <div class="info">
+                        <div class="name">${lvl.name} ${isUnlocked ? '✅' : '🔒'}</div>
+                        <div class="req">${lvl.min} 积分解锁</div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+</script>
+</body>
+</html>
