@@ -3,27 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>识字神庙 - 智能挑战</title>
+    <title>识字神庙 - 修复版</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
-    
     <style>
         body { margin: 0; background: #fdf2e9; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
         #header { width: 100%; display: flex; justify-content: space-between; padding: 15px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05); box-sizing: border-box; }
         .card { background: white; border-radius: 20px; padding: 30px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 50px; }
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-        .option-btn { padding: 15px; border: 2px solid #e67e22; border-radius: 12px; background: none; cursor: pointer; font-size: 24px; transition: 0.2s; color: #2c3e50; }
-        .option-btn:hover { background: #fff3e0; }
-        
-        /* 纠错层样式 ✏️ */
-        #correction-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); z-index: 100; flex-direction: column; align-items: center; justify-content: center; color: white;
-        }
+        .option-btn { padding: 15px; border: 2px solid #e67e22; border-radius: 12px; background: none; cursor: pointer; font-size: 24px; color: #2c3e50; }
+        #correction-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; flex-direction: column; align-items: center; justify-content: center; color: white; }
         #correction-canvas { background: white; border-radius: 15px; margin: 20px; }
-        
         .btn-primary { background: #e67e22; color: white; border: none; padding: 15px 40px; border-radius: 30px; font-size: 20px; cursor: pointer; }
     </style>
 </head>
@@ -37,20 +29,20 @@
 <div class="card" id="game-container">
     <div id="start-screen">
         <h1 style="color: #d35400;">🏛️ 识字神庙</h1>
-        <p>看拼音，找汉字。写错的字需要当场练习一遍哦！</p>
+        <p>看拼音，找汉字。如果写错了，要练习一遍哦！</p>
         <button class="btn-primary" onclick="startChallenge()">开始挑战</button>
     </div>
 </div>
 
 <div id="correction-overlay">
-    <h2>别担心，我们来练习一下：</h2>
+    <h2>别担心，我们练习一下：</h2>
     <div id="correction-canvas"></div>
-    <p>请按照笔画顺序写出这个字 ✍️</p>
+    <p>请按顺序写出这个字 ✍️</p>
 </div>
 
 <script>
-    // --- 1. 初始化 Firebase (请填入你的配置) ---
-    const firebaseConfig = {
+    // --- 请确保这里的配置正确 ---
+const firebaseConfig = {
   apiKey: "AIzaSyAs5UvfZ79S8BEnCz3z7C_nyBlZgSfb8z0",
   authDomain: "psle-adventure.firebaseapp.com",
   projectId: "psle-adventure",
@@ -63,29 +55,20 @@
     const auth = firebase.auth();
 
     let learnedWords = []; 
-    let wordList = []; // 备用词库
+    let wordList = []; 
     let testQueue = [];    
     let currentIdx = 0;
     let userDocRef = null;
-
-    // --- 2. 数据处理与兼容性 ---
-    function standardizeWords(rawWords) {
-        return rawWords.map(item => {
-            if (typeof item === 'string') {
-                return { text: item, correctCount: 1, wrongCount: 0, lastTested: Date.now() };
-            }
-            return item;
-        });
-    }
 
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             userDocRef = db.collection('users').doc(user.uid);
             const doc = await userDocRef.get();
-            learnedWords = standardizeWords(doc.data()?.learnedWords || []);
+            // 💡 兼容性处理：确保所有旧数据都有默认战绩属性
+            const rawData = doc.data()?.learnedWords || [];
+            learnedWords = rawData.map(w => typeof w === 'string' ? {text: w, correctCount: 0, wrongCount: 0} : w);
             document.getElementById('score-display').innerText = doc.data()?.score || 0;
             
-            // 加载总词库以备干扰项使用
             const res = await fetch('words.json');
             wordList = await res.json();
         } else {
@@ -93,45 +76,40 @@
         }
     });
 
-    // --- 3. 智能选题算法 ---
     function startChallenge() {
         const eligible = learnedWords.filter(w => !w.mastered);
         if (eligible.length < 1) {
-            alert("你已经精通了目前所有的词！去森林找点新宝藏吧。");
+            alert("你已经很棒了！去森林找点新单词吧。");
             return;
         }
 
-        // 差值排序：错误 - 正确
-        const sorted = eligible.map(w => ({
-            ...w,
-            diff: (w.wrongCount || 0) - (w.correctCount || 0)
-        })).sort((a, b) => b.diff - a.diff);
-
-        // 前 10 随机抽 5
+        // 智能选题：按错误次数排序
+        const sorted = eligible.sort((a, b) => (b.wrongCount || 0) - (a.wrongCount || 0));
         testQueue = sorted.slice(0, 10).sort(() => Math.random() - 0.5).slice(0, 5);
         currentIdx = 0;
         renderQuestion();
     }
 
-    // --- 4. 渲染题目：看拼音选汉字 ---
     function renderQuestion() {
         if (currentIdx >= testQueue.length) {
             showResult();
             return;
         }
 
-        const word = testQueue[currentIdx];
+        // 🔍 核心修复点：从总词库里通过汉字匹配找到完整的 word 对象（包含 pinyin）
+        const currentWordData = testQueue[currentIdx];
+        const fullWordInfo = wordList.find(w => w.text === currentWordData.text);
         
-        // 生成干扰项：从已学和总词库中抓取
-        let candidates = [...new Set([...learnedWords.map(w=>w.text), ...wordList.map(w=>w.text)])]
-            .filter(t => t !== word.text)
-            .sort(() => Math.random() - 0.5);
-        
-        const options = [word.text, ...candidates.slice(0, 3)].sort(() => Math.random() - 0.5);
+        // 如果找不到拼音，显示提示
+        const pinyinToShow = fullWordInfo ? fullWordInfo.pinyin : "拼音丢失";
+
+        // 生成干扰项
+        let others = wordList.filter(w => w.text !== currentWordData.text).sort(() => Math.random() - 0.5);
+        const options = [currentWordData.text, ...others.slice(0, 3).map(o => o.text)].sort(() => Math.random() - 0.5);
 
         document.getElementById('game-container').innerHTML = `
             <h3>第 ${currentIdx + 1} / 5 题</h3>
-            <h2 style="font-size: 50px; color: #e67e22;">"${word.pinyin}"</h2>
+            <h2 style="font-size: 50px; color: #e67e22;">"${pinyinToShow}"</h2>
             <p>对应的汉字是？</p>
             <div class="options-grid">
                 ${options.map(opt => `<button class="option-btn" onclick="checkAnswer('${opt}')">${opt}</button>`).join('')}
@@ -139,33 +117,26 @@
         `;
     }
 
-    // --- 5. 检查与纠错逻辑 ---
     async function checkAnswer(selected) {
         const word = testQueue[currentIdx];
         const isCorrect = selected === word.text;
 
-        // 更新数据库
         learnedWords = learnedWords.map(w => {
             if (w.text === word.text) {
-                if (isCorrect) w.correctCount++;
-                else w.wrongCount++;
-                // 检查精通标准：差值 >= 3
-                if (w.correctCount - (w.wrongCount || 0) >= 3) w.mastered = true;
+                if (isCorrect) w.correctCount = (w.correctCount || 0) + 1;
+                else w.wrongCount = (w.wrongCount || 0) + 1;
+                if ((w.correctCount - w.wrongCount) >= 3) w.mastered = true;
             }
             return w;
         });
 
-        await userDocRef.update({ 
-            learnedWords: learnedWords,
-            score: firebase.firestore.FieldValue.increment(isCorrect ? 5 : 0)
-        });
+        await userDocRef.update({ learnedWords: learnedWords, score: firebase.firestore.FieldValue.increment(isCorrect ? 5 : 0)});
 
         if (isCorrect) {
             alert("✅ 答对了！");
             currentIdx++;
             renderQuestion();
         } else {
-            // 触发 B 选项：互动纠错 ✏️
             showCorrection(word.text);
         }
     }
@@ -174,28 +145,18 @@
         const overlay = document.getElementById('correction-overlay');
         overlay.style.display = 'flex';
         document.getElementById('correction-canvas').innerHTML = '';
-
-        const writer = HanziWriter.create('correction-canvas', correctText, {
-            width: 250, height: 250, padding: 15, strokeColor: '#e74c3c'
-        });
-
-        writer.quiz({
-            onComplete: () => {
-                setTimeout(() => {
-                    overlay.style.display = 'none';
-                    currentIdx++;
-                    renderQuestion();
-                }, 1000);
-            }
-        });
+        const writer = HanziWriter.create('correction-canvas', correctText, { width: 250, height: 250, padding: 15, strokeColor: '#e74c3c' });
+        writer.quiz({ onComplete: () => {
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                currentIdx++;
+                renderQuestion();
+            }, 800);
+        }});
     }
 
     function showResult() {
-        document.getElementById('game-container').innerHTML = `
-            <h2>🏛️ 考验完成！</h2>
-            <p>你变得更强大了。</p>
-            <button class="btn-primary" onclick="location.href='index.html'">回到地图</button>
-        `;
+        document.getElementById('game-container').innerHTML = `<h2>🏛️ 考验完成！</h2><button class="btn-primary" onclick="location.href='index.html'">回到地图</button>`;
     }
 </script>
 </body>
