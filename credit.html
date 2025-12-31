@@ -3,120 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>积分宝库 - 荣誉殿堂</title>
+    <title>PSLE 华文冒险岛 - 荣誉榜</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore-compat.js"></script>
     
     <style>
-        body { margin: 0; background: #f1f8e9; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding-bottom: 50px; }
-        #header { width: 100%; display: flex; justify-content: space-between; padding: 15px; box-sizing: border-box; background: white; }
-        
-        /* 进度条样式 📏 */
-        .progress-container { width: 90%; max-width: 400px; background: #e0e0e0; border-radius: 20px; height: 25px; margin: 20px 0; position: relative; overflow: hidden; }
-        #progress-bar { height: 100%; background: linear-gradient(90deg, #4caf50, #8bc34a); width: 0%; transition: width 1s ease; }
-        #score-text { margin-top: 5px; font-weight: bold; color: #2e7d32; }
-
-        /* 勋章列表样式 🏅 */
-        .honor-list { width: 90%; max-width: 400px; }
-        .honor-card { display: flex; align-items: center; padding: 15px; margin-bottom: 15px; border-radius: 15px; background: white; transition: 0.3s; }
-        
-        /* 🔒 锁定状态 */
-        .locked { filter: grayscale(100%); opacity: 0.5; border: 2px dashed #ccc; }
-        /* ✨ 解锁状态 */
-        .unlocked { border: 2px solid #4caf50; box-shadow: 0 4px 10px rgba(76, 175, 80, 0.2); }
-
-        .icon { font-size: 40px; margin-right: 20px; }
-        .info { flex-grow: 1; }
-        .name { font-size: 18px; font-weight: bold; }
-        .req { font-size: 12px; color: #888; }
+        body { 
+            margin: 0; background: #f0f4f8; font-family: 'Comic Sans MS', cursive, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+        }
+        /* 荣誉卡片样式 */
+        .honor-card {
+            background: white; width: 85%; max-width: 500px; margin-top: 40px;
+            border-radius: 30px; padding: 30px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 8px solid #ffd700;
+        }
+        .title-text { font-size: 1.2em; color: #666; margin-bottom: 10px; }
+        /* 动态称号颜色 */
+        #honor-name { font-size: 2.5em; font-weight: bold; margin: 20px 0; transition: all 0.5s; }
+        .stats-box { 
+            display: flex; justify-content: space-around; background: #fff9db;
+            padding: 15px; border-radius: 20px; margin-top: 20px;
+        }
+        .stat-item { display: flex; flex-direction: column; }
+        .stat-val { font-size: 1.5em; font-weight: bold; color: #d4a017; }
+        .back-btn {
+            margin-top: 30px; padding: 12px 30px; background: #4285F4;
+            color: white; border: none; border-radius: 25px; cursor: pointer; font-size: 1.1em;
+        }
     </style>
 </head>
 <body>
 
-<div id="header">
-    <button onclick="location.href='index.html'" style="padding:8px 15px; border-radius:10px; border:none; background:#95a5a6; color:white; cursor:pointer;">🏠 返回地图</button>
-    <div style="font-weight:bold; color:#2e7d32;">当前积分: <span id="user-score">0</span></div>
-</div>
-
-<h2 style="color: #2e7d32; margin-top: 30px;">🌲 森林荣誉殿堂</h2>
-
-<div class="progress-container">
-    <div id="progress-bar"></div>
-</div>
-<div id="score-text">加载中...</div>
-
-<div id="honor-list" class="honor-list">
+<div class="honor-card">
+    <div class="title-text">✨ 冒险岛当前荣誉 ✨</div>
+    <div id="honor-name">加载中...</div>
+    
+    <div class="stats-box">
+        <div class="stat-item">
+            <span>🪙 累计积分</span>
+            <span id="score-val" class="stat-val">0</span>
+        </div>
+        <div class="stat-item">
+            <span>📖 掌握词量</span>
+            <span id="word-val" class="stat-val">0</span>
+        </div>
     </div>
 
+    <button class="back-btn" onclick="location.href='index.html'">🏠 返回地图</button>
+</div>
+
 <script>
-    // --- 1. Firebase 配置 (请填入你的配置) ---
-  
+    // Firebase 配置 (请确保使用您在 index.html 中的配置)
     const firebaseConfig = {
-  apiKey: "AIzaSyAs5UvfZ79S8BEnCz3z7C_nyBlZgSfb8z0",
-  authDomain: "psle-adventure.firebaseapp.com",
-  projectId: "psle-adventure",
-  storageBucket: "psle-adventure.firebasestorage.app",
-  messagingSenderId: "803923279070",
-  appId: "1:803923279070:web:55d629ecb9593c0249164f"
-};
+      apiKey: "AIzaSyAs5UvfZ79S8BEnCz3z7C_nyBlZgSfb8z0",
+      authDomain: "psle-adventure.firebaseapp.com",
+      projectId: "psle-adventure",
+      storageBucket: "psle-adventure.firebasestorage.app",
+      messagingSenderId: "803923279070",
+      appId: "1:803923279070:web:55d629ecb9593c0249164f"
+    };
 
     firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
     const db = firebase.firestore();
+    const auth = firebase.auth();
 
-    // 荣誉等级定义
-    const levels = [
-        { min: 0,   name: "识字萌芽", icon: "🌱" },
-        { min: 50,  name: "森林向导", icon: "🧭" },
-        { min: 100, name: "护林小卫士", icon: "🛡️" },
-        { min: 200, name: "森林之王", icon: "👑" }
-    ];
+    // 🏆 荣誉判定核心逻辑
+    function calculateHonor(score, masteredCount) {
+        const honorEl = document.getElementById('honor-name');
+        
+        // 阶梯判定 (从最高级开始判断)
+        if (masteredCount >= 600 && score >= 30000) {
+            honorEl.style.color = "#e67e22"; // 橙色
+            return "👑 冒险岛之王";
+        } else if (masteredCount >= 350 && score >= 15000) {
+            honorEl.style.color = "#9b59b6"; // 紫色
+            return "📜 翰林学士";
+        } else if (masteredCount >= 150 && score >= 5000) {
+            honorEl.style.color = "#3498db"; // 蓝色
+            return "⚔️ 华文骑士";
+        } else if (masteredCount >= 50 && score >= 1500) {
+            honorEl.style.color = "#27ae60"; // 绿色
+            return "🛡️ 森林守护者";
+        } else {
+            honorEl.style.color = "#7f8c8d"; // 灰色
+            return "🌱 识字萌新";
+        }
+    }
 
+    // 实时监听数据
     auth.onAuthStateChanged(user => {
         if (user) {
             db.collection('users').doc(user.uid).onSnapshot(doc => {
                 if (doc.exists) {
-                    const score = doc.data().score || 0;
-                    updateUI(score);
+                    const data = doc.data();
+                    const score = data.score || 0;
+                    const words = data.learnedWords || [];
+                    // 计算逻辑：只要正确过一次就算掌握 (correctCount > 0)
+                    const masteredCount = words.filter(w => w.correctCount > 0).length;
+
+                    // 更新 UI
+                    document.getElementById('score-val').innerText = score;
+                    document.getElementById('word-val').innerText = masteredCount;
+                    document.getElementById('honor-name').innerText = calculateHonor(score, masteredCount);
                 }
             });
         } else {
-            location.href = "index.html";
+            location.href = 'index.html'; // 未登录则跳回
         }
     });
-
-    function updateUI(score) {
-        document.getElementById('user-score').innerText = score;
-        
-        // 更新进度条 (假设满分为 250)
-        const progress = Math.min((score / 250) * 100, 100);
-        document.getElementById('progress-bar').style.width = progress + "%";
-        
-        // 找出距离下一级的差分
-        const nextLevel = levels.find(l => l.min > score);
-        if (nextLevel) {
-            document.getElementById('score-text').innerText = `再拿 ${nextLevel.min - score} 分就能解锁【${nextLevel.name}】啦！`;
-        } else {
-            document.getElementById('score-text').innerText = "你已经是最高等级的森林之王了！👑";
-        }
-
-        // 渲染勋章列表
-        const list = document.getElementById('honor-list');
-        list.innerHTML = "";
-        levels.forEach(lvl => {
-            const isUnlocked = score >= lvl.min;
-            list.innerHTML += `
-                <div class="honor-card ${isUnlocked ? 'unlocked' : 'locked'}">
-                    <div class="icon">${lvl.icon}</div>
-                    <div class="info">
-                        <div class="name">${lvl.name} ${isUnlocked ? '✅' : '🔒'}</div>
-                        <div class="req">${lvl.min} 积分解锁</div>
-                    </div>
-                </div>
-            `;
-        });
-    }
 </script>
+
 </body>
 </html>
