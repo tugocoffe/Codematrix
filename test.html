@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>识字神庙 - 终极修复版</title>
+    <title>识字神庙 - 终极全词练习版</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore-compat.js"></script>
@@ -16,17 +16,18 @@
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
         .option-btn { padding: 18px; border: 2px solid #e67e22; border-radius: 12px; background: white; cursor: pointer; font-size: 24px; color: #2c3e50; }
         
-        /* 纠错遮罩层：确保全屏置顶 */
+        /* 纠错层：全屏锁定 */
         #correction-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; color: white;
         }
-        /* 画布容器：给明确的背景和尺寸 */
+        /* 写字板容器 */
         #correction-canvas { 
             background: white; border-radius: 15px; margin: 20px; 
             width: 250px; height: 250px; 
         }
-        .btn-primary { background: #e67e22; color: white; border: none; padding: 15px 40px; border-radius: 30px; font-size: 20px; }
+        #progress-hint { color: #ffcc00; font-size: 20px; font-weight: bold; margin-bottom: 10px; }
+        .btn-primary { background: #e67e22; color: white; border: none; padding: 15px 40px; border-radius: 30px; font-size: 20px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -39,20 +40,20 @@
 <div class="card" id="game-container">
     <div id="start-screen">
         <h1 style="color: #d35400;">🏛️ 识字神庙</h1>
-        <p>看拼音，找汉字。挑战开始！</p>
+        <p>看拼音，找汉字。如果写错了，要练习整个词组哦！</p>
         <button class="btn-primary" onclick="startChallenge()">开始挑战</button>
     </div>
 </div>
 
 <div id="correction-overlay">
-    <h2 id="correction-msg">写错啦，练一遍：</h2>
+    <div id="progress-hint">准备练习...</div>
     <div id="correction-canvas"></div>
     <p>请按笔顺写出这个字 ✍️</p>
 </div>
 
 <script>
-    // --- 1. Firebase 配置 (请确认已填入) ---
-const firebaseConfig = {
+    // --- 1. Firebase 配置 (请填入你的配置) ---
+    const firebaseConfig = {
   apiKey: "AIzaSyAs5UvfZ79S8BEnCz3z7C_nyBlZgSfb8z0",
   authDomain: "psle-adventure.firebaseapp.com",
   projectId: "psle-adventure",
@@ -70,34 +71,41 @@ const firebaseConfig = {
     let currentIdx = 0;
     let userDocRef = null;
 
+    // 初始化数据
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             userDocRef = db.collection('users').doc(user.uid);
             const doc = await userDocRef.get();
             const rawData = doc.data()?.learnedWords || [];
+            // 确保数据格式正确
             learnedWords = rawData.map(w => typeof w === 'string' ? {text: w, correctCount: 0, wrongCount: 0} : w);
             document.getElementById('score-display').innerText = doc.data()?.score || 0;
             
-            // 💡 预加载字典
-            const res = await fetch('words.json');
-            wordList = await res.json();
+            // 加载总字典 words.json
+            try {
+                const res = await fetch('words.json');
+                wordList = await res.json();
+            } catch (e) { console.error("字典加载失败"); }
         } else {
             location.href = 'index.html';
         }
     });
 
+    // 开始挑战
     function startChallenge() {
         const eligible = learnedWords.filter(w => !w.mastered);
         if (eligible.length < 1) {
-            alert("词库已全部精通！");
+            alert("所有的词都已经精通啦！");
             return;
         }
+        // 按错误率排序并随机抽取5个
         const sorted = eligible.sort((a, b) => (b.wrongCount || 0) - (a.wrongCount || 0));
         testQueue = sorted.slice(0, 10).sort(() => Math.random() - 0.5).slice(0, 5);
         currentIdx = 0;
         renderQuestion();
     }
 
+    // 渲染题目
     function renderQuestion() {
         if (currentIdx >= testQueue.length) {
             showResult();
@@ -105,22 +113,24 @@ const firebaseConfig = {
         }
 
         const currentWord = testQueue[currentIdx];
-        // 💡 修复拼音：从 wordList 中查找
+        // 💡 关键：从 wordList 中查找对应的拼音
         const dictInfo = wordList.find(w => w.text === currentWord.text);
-        const pinyin = dictInfo ? dictInfo.pinyin : "???";
+        const pinyin = dictInfo ? dictInfo.pinyin : "拼音丢失";
 
+        // 生成干扰项
         let others = wordList.filter(w => w.text !== currentWord.text).sort(() => Math.random() - 0.5);
         const options = [currentWord.text, ...others.slice(0, 3).map(o => o.text)].sort(() => Math.random() - 0.5);
 
         document.getElementById('game-container').innerHTML = `
             <h3>第 ${currentIdx + 1} / 5 题</h3>
-            <h2 style="font-size: 48px; color: #e67e22; margin: 20px 0;">"${pinyin}"</h2>
+            <h2 style="font-size: 50px; color: #e67e22; margin: 20px 0;">"${pinyin}"</h2>
             <div class="options-grid">
                 ${options.map(opt => `<button class="option-btn" onclick="checkAnswer('${opt}')">${opt}</button>`).join('')}
             </div>
         `;
     }
 
+    // 检查答案
     async function checkAnswer(selected) {
         const word = testQueue[currentIdx];
         const isCorrect = selected === word.text;
@@ -129,6 +139,7 @@ const firebaseConfig = {
             if (w.text === word.text) {
                 if (isCorrect) w.correctCount = (w.correctCount || 0) + 1;
                 else w.wrongCount = (w.wrongCount || 0) + 1;
+                // 精通判断：正确比错误多3次
                 if ((w.correctCount - w.wrongCount) >= 3) w.mastered = true;
             }
             return w;
@@ -140,38 +151,72 @@ const firebaseConfig = {
             currentIdx++;
             renderQuestion();
         } else {
-            showCorrection(word.text);
+            showCorrection(word.text); // 触发全词练习
         }
     }
 
+    // --- 💡 全词练习逻辑 ---
+
     function showCorrection(text) {
         const overlay = document.getElementById('correction-overlay');
-        overlay.style.display = 'flex'; // 1. 先显示
+        overlay.style.display = 'flex'; 
         
+        // 1. 将词语拆分为数组，如 "橡皮" -> ["橡", "皮"]
+        const charArray = text.split(''); 
+        const charIdx = 0; 
+
+        // 2. 延迟启动，确保渲染
+        setTimeout(() => {
+            startMultiCharQuiz(charArray, charIdx);
+        }, 200);
+    }
+
+    // 独立递归函数，处理多字连写
+    function startMultiCharQuiz(charArray, charIdx) {
         const canvas = document.getElementById('correction-canvas');
+        const hint = document.getElementById('progress-hint');
         canvas.innerHTML = ''; 
 
-        const char = text.charAt(0); // 2. 只练第一个字
+        const currentChar = charArray[charIdx];
+        const total = charArray.length;
 
-        // 3. 延迟初始化，防止手机端白屏
-        setTimeout(() => {
-            const writer = HanziWriter.create('correction-canvas', char, {
-                width: 250, height: 250, padding: 15, strokeColor: '#e74c3c'
-            });
-            writer.quiz({
-                onComplete: () => {
+        // 更新进度提示
+        hint.innerText = `正在练习：${currentChar} (${charIdx + 1}/${total})`;
+
+        // 创建 HanziWriter 实例
+        const writer = HanziWriter.create('correction-canvas', currentChar, {
+            width: 250, height: 250, padding: 15, strokeColor: '#e74c3c', showOutline: true
+        });
+
+        // 开启测验
+        writer.quiz({
+            onComplete: () => {
+                const nextIdx = charIdx + 1;
+                // 判断是否还有下一个字
+                if (nextIdx < charArray.length) {
                     setTimeout(() => {
-                        overlay.style.display = 'none';
-                        currentIdx++;
-                        renderQuestion();
-                    }, 800);
+                        startMultiCharQuiz(charArray, nextIdx); 
+                    }, 600);
+                } else {
+                    // 全部练完，功德圆满
+                    setTimeout(finishCorrection, 600);
                 }
-            });
-        }, 200); 
+            }
+        });
+    }
+
+    function finishCorrection() {
+        document.getElementById('correction-overlay').style.display = 'none';
+        currentIdx++; 
+        renderQuestion(); 
     }
 
     function showResult() {
-        document.getElementById('game-container').innerHTML = `<h2>🏛️ 考验完成！</h2><button class="btn-primary" onclick="location.href='index.html'">回到地图</button>`;
+        document.getElementById('game-container').innerHTML = `
+            <h2>🏛️ 挑战完成！</h2>
+            <p>你坚持完成了所有练习，真棒！</p>
+            <button class="btn-primary" onclick="location.href='index.html'">回到地图</button>
+        `;
     }
 </script>
 </body>
