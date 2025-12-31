@@ -13,36 +13,44 @@
             margin: 0; background: #f0f4f8; font-family: 'Comic Sans MS', cursive, sans-serif; 
             display: flex; flex-direction: column; align-items: center; min-height: 100vh;
         }
+        /* 🏆 荣誉卡片容器 */
         .honor-card {
             background: white; width: 85%; max-width: 500px; margin-top: 40px;
             border-radius: 30px; padding: 30px; text-align: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 8px solid #ffd700;
         }
         .title-text { font-size: 1.1em; color: #666; }
-        #honor-name { font-size: 2.2em; font-weight: bold; margin: 15px 0; }
+        #honor-name { font-size: 2.2em; font-weight: bold; margin: 15px 0; transition: color 0.5s ease; }
+        
+        /* 📊 数据展示盒 */
         .stats-box { 
             display: flex; justify-content: space-around; background: #fff9db;
             padding: 15px; border-radius: 20px; margin-top: 10px;
         }
         .stat-item { display: flex; flex-direction: column; }
         .stat-val { font-size: 1.4em; font-weight: bold; color: #d4a017; }
+        
+        /* 🎯 距离下一级提示区 */
         #next-level-hint {
             margin-top: 25px; padding: 15px; background: #f9f9f9;
             border-radius: 15px; border: 1px dashed #ccc;
             color: #555; font-size: 0.95em; line-height: 1.6;
         }
         .gap-text { font-weight: bold; font-size: 1.1em; }
+        
         .back-btn {
             margin-top: 25px; padding: 12px 30px; background: #4285F4;
             color: white; border: none; border-radius: 25px; cursor: pointer;
+            font-size: 1.1em; font-weight: bold;
         }
+        .back-btn:hover { background: #357ae8; }
     </style>
 </head>
 <body>
 
 <div class="honor-card">
     <div class="title-text">✨ 我的冒险成就 ✨</div>
-    <div id="honor-name">加载中...</div>
+    <div id="honor-name">正在加载...</div>
     
     <div class="stats-box">
         <div class="stat-item">
@@ -55,12 +63,13 @@
         </div>
     </div>
 
-    <div id="next-level-hint">正在计算下一个挑战...</div>
+    <div id="next-level-hint">正在计算你的下一个目标...</div>
 
     <button class="back-btn" onclick="location.href='index.html'">🏠 返回地图</button>
 </div>
 
 <script>
+    // 2. Firebase 配置 (请确认与你 index.html 中的配置完全一致)
     const firebaseConfig = {
       apiKey: "AIzaSyAs5UvfZ79S8BEnCz3z7C_nyBlZgSfb8z0",
       authDomain: "psle-adventure.firebaseapp.com",
@@ -74,6 +83,7 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
+    // 3. 等级与门槛配置 🎖️
     const LEVELS = [
         { name: "🌱 识字萌新", words: 0, score: 0, color: "#7f8c8d" },
         { name: "🛡️ 森林守护者", words: 50, score: 1500, color: "#27ae60" },
@@ -82,10 +92,12 @@
         { name: "👑 冒险岛之王", words: 600, score: 30000, color: "#e67e22" }
     ];
 
+    // 4. 更新界面的核心逻辑
     function updateHonorUI(score, masteredCount) {
         const honorEl = document.getElementById('honor-name');
         const hintEl = document.getElementById('next-level-hint');
         
+        // 查找当前等级
         let currentLevelIdx = 0;
         for (let i = LEVELS.length - 1; i >= 0; i--) {
             if (masteredCount >= LEVELS[i].words && score >= LEVELS[i].score) {
@@ -98,16 +110,15 @@
         honorEl.innerText = currentLevel.name;
         honorEl.style.color = currentLevel.color;
 
-        // 💡 核心逻辑：只显示没到达的部分
+        // 5. 计算并显示差距 (只显示未达标项)
         if (currentLevelIdx < LEVELS.length - 1) {
             const nextLevel = LEVELS[currentLevelIdx + 1];
             const wordGap = nextLevel.words - masteredCount;
             const scoreGap = nextLevel.score - score;
             
-            let hintMsg = `距离升级到 <b>${nextLevel.name}</b> 还需要：<br>`;
             let gapParts = [];
 
-            // 只有当差距大于 0 时才加入显示列表
+            // 只有还没达标的才放进数组 🧩
             if (scoreGap > 0) {
                 gapParts.push(`<span class="gap-text" style="color: #d35400;">🪙 ${scoreGap} 积分</span>`);
             }
@@ -115,12 +126,13 @@
                 gapParts.push(`<span class="gap-text" style="color: #27ae60;">📖 ${wordGap} 个单词</span>`);
             }
 
-            hintEl.innerHTML = hintMsg + gapParts.join(' 和 ');
+            hintEl.innerHTML = `距离升级到 <b>${nextLevel.name}</b> 还需要：<br>` + gapParts.join(' 和 ');
         } else {
-            hintEl.innerHTML = "🏆 登峰造极！你已达成所有荣誉！";
+            hintEl.innerHTML = "🏆 登峰造极！你已达成所有荣誉，你是真正的冒险岛之王！";
         }
     }
 
+    // 6. 实时监听 Firebase 数据
     auth.onAuthStateChanged(user => {
         if (user) {
             db.collection('users').doc(user.uid).onSnapshot(doc => {
@@ -128,14 +140,17 @@
                     const data = doc.data();
                     const score = data.score || 0;
                     const words = data.learnedWords || [];
-                    const masteredCount = words.filter(w => w.correctCount > 0).length;
+                    // 只要对过一次就算学会
+                    const masteredCount = words.filter(w => (w.correctCount || 0) > 0).length;
 
                     document.getElementById('score-val').innerText = score;
                     document.getElementById('word-val').innerText = masteredCount;
+                    
                     updateHonorUI(score, masteredCount);
                 }
             });
         } else {
+            // 未登录重定向
             location.href = 'index.html';
         }
     });
