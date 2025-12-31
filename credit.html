@@ -13,31 +13,35 @@
             margin: 0; background: #f0f4f8; font-family: 'Comic Sans MS', cursive, sans-serif; 
             display: flex; flex-direction: column; align-items: center; min-height: 100vh;
         }
-        /* 荣誉卡片样式 */
         .honor-card {
             background: white; width: 85%; max-width: 500px; margin-top: 40px;
             border-radius: 30px; padding: 30px; text-align: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 8px solid #ffd700;
         }
-        .title-text { font-size: 1.2em; color: #666; margin-bottom: 10px; }
-        /* 动态称号颜色 */
-        #honor-name { font-size: 2.5em; font-weight: bold; margin: 20px 0; transition: all 0.5s; }
+        .title-text { font-size: 1.1em; color: #666; }
+        #honor-name { font-size: 2.2em; font-weight: bold; margin: 15px 0; }
         .stats-box { 
             display: flex; justify-content: space-around; background: #fff9db;
-            padding: 15px; border-radius: 20px; margin-top: 20px;
+            padding: 15px; border-radius: 20px; margin-top: 10px;
         }
         .stat-item { display: flex; flex-direction: column; }
-        .stat-val { font-size: 1.5em; font-weight: bold; color: #d4a017; }
+        .stat-val { font-size: 1.4em; font-weight: bold; color: #d4a017; }
+        #next-level-hint {
+            margin-top: 25px; padding: 15px; background: #f9f9f9;
+            border-radius: 15px; border: 1px dashed #ccc;
+            color: #555; font-size: 0.95em; line-height: 1.6;
+        }
+        .gap-text { font-weight: bold; font-size: 1.1em; }
         .back-btn {
-            margin-top: 30px; padding: 12px 30px; background: #4285F4;
-            color: white; border: none; border-radius: 25px; cursor: pointer; font-size: 1.1em;
+            margin-top: 25px; padding: 12px 30px; background: #4285F4;
+            color: white; border: none; border-radius: 25px; cursor: pointer;
         }
     </style>
 </head>
 <body>
 
 <div class="honor-card">
-    <div class="title-text">✨ 冒险岛当前荣誉 ✨</div>
+    <div class="title-text">✨ 我的冒险成就 ✨</div>
     <div id="honor-name">加载中...</div>
     
     <div class="stats-box">
@@ -51,11 +55,12 @@
         </div>
     </div>
 
+    <div id="next-level-hint">正在计算下一个挑战...</div>
+
     <button class="back-btn" onclick="location.href='index.html'">🏠 返回地图</button>
 </div>
 
 <script>
-    // Firebase 配置 (请确保使用您在 index.html 中的配置)
     const firebaseConfig = {
       apiKey: "AIzaSyAs5UvfZ79S8BEnCz3z7C_nyBlZgSfb8z0",
       authDomain: "psle-adventure.firebaseapp.com",
@@ -69,30 +74,53 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // 🏆 荣誉判定核心逻辑
-    function calculateHonor(score, masteredCount) {
+    const LEVELS = [
+        { name: "🌱 识字萌新", words: 0, score: 0, color: "#7f8c8d" },
+        { name: "🛡️ 森林守护者", words: 50, score: 1500, color: "#27ae60" },
+        { name: "⚔️ 华文骑士", words: 150, score: 5000, color: "#3498db" },
+        { name: "📜 翰林学士", words: 350, score: 15000, color: "#9b59b6" },
+        { name: "👑 冒险岛之王", words: 600, score: 30000, color: "#e67e22" }
+    ];
+
+    function updateHonorUI(score, masteredCount) {
         const honorEl = document.getElementById('honor-name');
+        const hintEl = document.getElementById('next-level-hint');
         
-        // 阶梯判定 (从最高级开始判断)
-        if (masteredCount >= 600 && score >= 30000) {
-            honorEl.style.color = "#e67e22"; // 橙色
-            return "👑 冒险岛之王";
-        } else if (masteredCount >= 350 && score >= 15000) {
-            honorEl.style.color = "#9b59b6"; // 紫色
-            return "📜 翰林学士";
-        } else if (masteredCount >= 150 && score >= 5000) {
-            honorEl.style.color = "#3498db"; // 蓝色
-            return "⚔️ 华文骑士";
-        } else if (masteredCount >= 50 && score >= 1500) {
-            honorEl.style.color = "#27ae60"; // 绿色
-            return "🛡️ 森林守护者";
+        let currentLevelIdx = 0;
+        for (let i = LEVELS.length - 1; i >= 0; i--) {
+            if (masteredCount >= LEVELS[i].words && score >= LEVELS[i].score) {
+                currentLevelIdx = i;
+                break;
+            }
+        }
+
+        const currentLevel = LEVELS[currentLevelIdx];
+        honorEl.innerText = currentLevel.name;
+        honorEl.style.color = currentLevel.color;
+
+        // 💡 核心逻辑：只显示没到达的部分
+        if (currentLevelIdx < LEVELS.length - 1) {
+            const nextLevel = LEVELS[currentLevelIdx + 1];
+            const wordGap = nextLevel.words - masteredCount;
+            const scoreGap = nextLevel.score - score;
+            
+            let hintMsg = `距离升级到 <b>${nextLevel.name}</b> 还需要：<br>`;
+            let gapParts = [];
+
+            // 只有当差距大于 0 时才加入显示列表
+            if (scoreGap > 0) {
+                gapParts.push(`<span class="gap-text" style="color: #d35400;">🪙 ${scoreGap} 积分</span>`);
+            }
+            if (wordGap > 0) {
+                gapParts.push(`<span class="gap-text" style="color: #27ae60;">📖 ${wordGap} 个单词</span>`);
+            }
+
+            hintEl.innerHTML = hintMsg + gapParts.join(' 和 ');
         } else {
-            honorEl.style.color = "#7f8c8d"; // 灰色
-            return "🌱 识字萌新";
+            hintEl.innerHTML = "🏆 登峰造极！你已达成所有荣誉！";
         }
     }
 
-    // 实时监听数据
     auth.onAuthStateChanged(user => {
         if (user) {
             db.collection('users').doc(user.uid).onSnapshot(doc => {
@@ -100,17 +128,15 @@
                     const data = doc.data();
                     const score = data.score || 0;
                     const words = data.learnedWords || [];
-                    // 计算逻辑：只要正确过一次就算掌握 (correctCount > 0)
                     const masteredCount = words.filter(w => w.correctCount > 0).length;
 
-                    // 更新 UI
                     document.getElementById('score-val').innerText = score;
                     document.getElementById('word-val').innerText = masteredCount;
-                    document.getElementById('honor-name').innerText = calculateHonor(score, masteredCount);
+                    updateHonorUI(score, masteredCount);
                 }
             });
         } else {
-            location.href = 'index.html'; // 未登录则跳回
+            location.href = 'index.html';
         }
     });
 </script>
