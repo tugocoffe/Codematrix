@@ -14,7 +14,6 @@
         #header { width: 100%; display: flex; justify-content: space-between; padding: 15px; background: white; box-sizing: border-box; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .card { background: white; border-radius: 20px; padding: 25px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 30px; }
         
-        /* 输入框样式 */
         #answer-input { 
             font-size: 24px; padding: 12px; width: 80%; border-radius: 12px; 
             border: 2px solid #e67e22; text-align: center; margin-bottom: 20px;
@@ -28,6 +27,9 @@
         #correction-canvas { background: white; border-radius: 15px; margin: 20px; width: 250px; height: 250px; }
         #progress-hint { color: #ffcc00; font-size: 20px; font-weight: bold; margin-bottom: 10px; }
         .btn-primary { background: #e67e22; color: white; border: none; padding: 15px 40px; border-radius: 30px; font-size: 20px; margin-top: 10px; cursor: pointer; }
+        
+        /* 💡 新增：英文提示样式 */
+        .english-hint { color: #7f8c8d; font-size: 20px; margin-bottom: 25px; font-style: italic; }
     </style>
 </head>
 <body>
@@ -40,7 +42,7 @@
 <div class="card" id="game-container">
     <div id="start-screen">
         <h1 style="color: #d35400;">🏛️ 识字神庙</h1>
-        <p>看拼音，写汉字。<br>只有第一次写对才有积分奖励哦！</p>
+        <p>看拼音和英文提示，写出汉字。<br>只有第一次写对才有积分奖励哦！</p>
         <button class="btn-primary" onclick="startChallenge()">开始挑战</button>
     </div>
 </div>
@@ -52,7 +54,6 @@
 </div>
 
 <script>
-    // --- 1. Firebase 配置 ---
     const firebaseConfig = {
         apiKey: "AIzaSyAs5UvfZ79S8BEnCz3z7C_nyBlZgSfb8z0",
         authDomain: "psle-adventure.firebaseapp.com",
@@ -89,7 +90,6 @@
     });
 
     function startChallenge() {
-        // 筛选只要 correctCount > 0 还没达标的，或者所有已学过的词
         const eligible = learnedWords; 
         if (eligible.length < 1) {
             alert("先去识字森林学习一些单词吧！");
@@ -108,11 +108,15 @@
 
         const currentWord = testQueue[currentIdx];
         const dictInfo = wordList.find(w => w.text === currentWord.text);
+        
+        // 💡 提取拼音和英文意思
         const pinyin = dictInfo ? dictInfo.pinyin : "拼音丢失";
+        const englishMeaning = dictInfo && dictInfo.english ? dictInfo.english : "No translation";
 
         document.getElementById('game-container').innerHTML = `
             <h3>第 ${currentIdx + 1} / 5 题</h3>
-            <h2 style="font-size: 50px; color: #e67e22; margin: 20px 0;">"${pinyin}"</h2>
+            <h2 style="font-size: 50px; color: #e67e22; margin: 20px 0 5px 0;">"${pinyin}"</h2>
+            <p class="english-hint">(${englishMeaning})</p>
             <input type="text" id="answer-input" placeholder="输入汉字" autocomplete="off">
             <br>
             <button class="btn-primary" onclick="submitAnswer()">提交答案</button>
@@ -133,7 +137,6 @@
         const word = testQueue[currentIdx];
         const isCorrect = userAnswer === word.text;
 
-        // 更新本地数据
         learnedWords = learnedWords.map(w => {
             if (w.text === word.text) {
                 if (isCorrect) {
@@ -145,14 +148,12 @@
             return w;
         });
 
-        // 💡 只有第一次写对才加5分
         const scoreIncrement = isCorrect ? 5 : 0;
         await userDocRef.update({ 
             learnedWords, 
             score: firebase.firestore.FieldValue.increment(scoreIncrement) 
         });
 
-        // 更新界面积分显示
         const currentScore = parseInt(document.getElementById('score-display').innerText);
         document.getElementById('score-display').innerText = currentScore + scoreIncrement;
 
@@ -160,7 +161,7 @@
             currentIdx++;
             renderQuestion();
         } else {
-            showCorrection(word.text); // 触发笔顺练习
+            showCorrection(word.text); 
         }
     }
 
