@@ -16,6 +16,8 @@
         .card { background: white; border-radius: 20px; padding: 25px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-top: 20px; }
         #writer-canvas { width: 250px; height: 250px; margin: 20px auto; border: 1px solid #eee; border-radius: 10px; }
         .btn-next { background: #2ecc71; color: white; border: none; padding: 12px 25px; border-radius: 25px; cursor: pointer; display: none; }
+        /* 💡 新增：遍数进度样式 */
+        #count-tag { display: inline-block; background: #e1f5fe; color: #0288d1; padding: 4px 12px; border-radius: 10px; font-size: 0.9em; margin-bottom: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -29,6 +31,7 @@
 </div>
 
 <div class="card" id="game-card">
+    <div id="count-tag">进度: 1 / 2 遍</div>
     <h1 id="word-title">载入中...</h1>
     <p id="pinyin-display" style="color: #7f8c8d;"></p>
     <div id="writer-canvas"></div>
@@ -37,15 +40,14 @@
 </div>
 
 <script>
-    // --- 1. 配置与初始化 ---
     const firebaseConfig = {
-  apiKey: "AIzaSyAs5UvfZ79S8BEnCz3z7C_nyBlZgSfb8z0",
-  authDomain: "psle-adventure.firebaseapp.com",
-  projectId: "psle-adventure",
-  storageBucket: "psle-adventure.firebasestorage.app",
-  messagingSenderId: "803923279070",
-  appId: "1:803923279070:web:55d629ecb9593c0249164f"
-};
+        apiKey: "AIzaSyAs5UvfZ79S8BEnCz3z7C_nyBlZgSfb8z0",
+        authDomain: "psle-adventure.firebaseapp.com",
+        projectId: "psle-adventure",
+        storageBucket: "psle-adventure.firebasestorage.app",
+        messagingSenderId: "803923279070",
+        appId: "1:803923279070:web:55d629ecb9593c0249164f"
+    };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
@@ -54,24 +56,17 @@
     let currentWordIdx = 0;
     let writer;
     let userDocRef = null;
+    let timesWritten = 0; // 💡 记录当前单词写了多少遍
 
-    // --- 2. 核心：兼容性处理器 🔄 ---
     function standardizeWords(rawWords) {
         return rawWords.map(item => {
-            // 如果是旧的字符串格式，自动包装成带计数器的对象
             if (typeof item === 'string') {
-                return {
-                    text: item,
-                    correctCount: 0,
-                    wrongCount: 0,
-                    lastTested: Date.now()
-                };
+                return { text: item, correctCount: 0, wrongCount: 0, lastTested: Date.now() };
             }
-            return item; // 如果已经是对象格式，直接返回
+            return item;
         });
     }
 
-    // --- 3. 数据监听与加载 ---
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             userDocRef = db.collection('users').doc(user.uid);
@@ -87,14 +82,11 @@
     async function initForest() {
         const response = await fetch('words.json');
         const allWords = await response.json();
-        
         const userDoc = await userDocRef.get();
-        // 获取原始数据并进行“兼容化”处理
         const rawLearned = userDoc.data()?.learnedWords || [];
         const learned = standardizeWords(rawLearned);
         const learnedTexts = learned.map(item => item.text);
 
-        // 过滤出未学词汇
         wordList = allWords.filter(w => !learnedTexts.includes(w.text));
         document.getElementById('remaining-count').innerText = wordList.length;
 
@@ -102,12 +94,12 @@
         else showCompletion();
     }
 
-    // --- 4. 交互逻辑 ---
     function displayWord() {
         const word = wordList[currentWordIdx];
         document.getElementById('word-title').innerText = word.text;
         document.getElementById('pinyin-display').innerText = word.pinyin;
         document.getElementById('next-btn').style.display = "none";
+        document.getElementById('count-tag').innerText = `进度: ${timesWritten + 1} / 2 遍`;
         
         let charIdx = 0;
         const loadChar = (char) => {
@@ -118,7 +110,19 @@
             writer.quiz({
                 onComplete: async () => {
                     if (charIdx === word.chars.length - 1) {
-                        await saveProgress(word.text);
+                        // 💡 检查是否写完两遍
+                        timesWritten++;
+                        if (timesWritten < 2) {
+                            document.getElementById('status-msg').innerText = "太棒了，再写一遍巩固一下！✍️";
+                            document.getElementById('count-tag').innerText = `进度: 2 / 2 遍`;
+                            setTimeout(() => {
+                                charIdx = 0; // 重置字符索引
+                                loadChar(word.chars[charIdx]);
+                            }, 800);
+                        } else {
+                            await saveProgress(word.text);
+                            timesWritten = 0; // 重置计数器，为下一个词做准备
+                        }
                     } else {
                         charIdx++;
                         setTimeout(() => loadChar(word.chars[charIdx]), 500);
@@ -130,12 +134,10 @@
     }
 
     async function saveProgress(wordText) {
-        // 更新本地列表和计数
         wordList = wordList.filter(w => w.text !== wordText);
         document.getElementById('remaining-count').innerText = wordList.length;
         document.getElementById('status-msg').innerText = "✅ 获得宝藏！";
 
-        // 存入新格式的对象 📦
         const newEntry = { text: wordText, correctCount: 0, wrongCount: 0, lastTested: Date.now() };
         await userDocRef.update({
             score: firebase.firestore.FieldValue.increment(10),
