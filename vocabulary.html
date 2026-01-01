@@ -16,8 +16,9 @@
         .card { background: white; border-radius: 20px; padding: 25px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-top: 20px; }
         #writer-canvas { width: 250px; height: 250px; margin: 20px auto; border: 1px solid #eee; border-radius: 10px; }
         .btn-next { background: #2ecc71; color: white; border: none; padding: 12px 25px; border-radius: 25px; cursor: pointer; display: none; }
-        /* 💡 新增：遍数进度样式 */
         #count-tag { display: inline-block; background: #e1f5fe; color: #0288d1; padding: 4px 12px; border-radius: 10px; font-size: 0.9em; margin-bottom: 10px; font-weight: bold; }
+        /* 💡 新增：英文意思的样式 */
+        #english-display { color: #27ae60; font-size: 1.1em; margin: -5px 0 15px 0; font-style: italic; font-weight: 500; }
     </style>
 </head>
 <body>
@@ -33,7 +34,8 @@
 <div class="card" id="game-card">
     <div id="count-tag">进度: 1 / 2 遍</div>
     <h1 id="word-title">载入中...</h1>
-    <p id="pinyin-display" style="color: #7f8c8d;"></p>
+    <p id="pinyin-display" style="color: #7f8c8d; margin-bottom: 5px;"></p>
+    <div id="english-display"></div>
     <div id="writer-canvas"></div>
     <div id="status-msg" style="height: 20px; margin-bottom: 10px; font-weight: bold;"></div>
     <button id="next-btn" class="btn-next" onclick="nextWord()">下一个宝藏 ➡️</button>
@@ -56,7 +58,7 @@
     let currentWordIdx = 0;
     let writer;
     let userDocRef = null;
-    let timesWritten = 0; // 💡 记录当前单词写了多少遍
+    let timesWritten = 0;
 
     function standardizeWords(rawWords) {
         return rawWords.map(item => {
@@ -98,6 +100,11 @@
         const word = wordList[currentWordIdx];
         document.getElementById('word-title').innerText = word.text;
         document.getElementById('pinyin-display').innerText = word.pinyin;
+        
+        // 💡 关键修改：显示带括号的英文意思
+        const meaning = word.english || "No translation";
+        document.getElementById('english-display').innerText = `(${meaning})`;
+        
         document.getElementById('next-btn').style.display = "none";
         document.getElementById('count-tag').innerText = `进度: ${timesWritten + 1} / 2 遍`;
         
@@ -110,18 +117,17 @@
             writer.quiz({
                 onComplete: async () => {
                     if (charIdx === word.chars.length - 1) {
-                        // 💡 检查是否写完两遍
                         timesWritten++;
                         if (timesWritten < 2) {
                             document.getElementById('status-msg').innerText = "太棒了，再写一遍巩固一下！✍️";
                             document.getElementById('count-tag').innerText = `进度: 2 / 2 遍`;
                             setTimeout(() => {
-                                charIdx = 0; // 重置字符索引
+                                charIdx = 0;
                                 loadChar(word.chars[charIdx]);
                             }, 800);
                         } else {
                             await saveProgress(word.text);
-                            timesWritten = 0; // 重置计数器，为下一个词做准备
+                            timesWritten = 0;
                         }
                     } else {
                         charIdx++;
