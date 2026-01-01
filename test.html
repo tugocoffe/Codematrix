@@ -13,23 +13,13 @@
         body { margin: 0; background: #fdf2e9; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; }
         #header { width: 100%; display: flex; justify-content: space-between; padding: 15px; background: white; box-sizing: border-box; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .card { background: white; border-radius: 20px; padding: 25px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 30px; }
-        
-        #answer-input { 
-            font-size: 24px; padding: 12px; width: 80%; border-radius: 12px; 
-            border: 2px solid #e67e22; text-align: center; margin-bottom: 20px;
-            outline: none;
-        }
-
-        #correction-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; color: white;
-        }
+        #answer-input { font-size: 24px; padding: 12px; width: 80%; border-radius: 12px; border: 2px solid #e67e22; text-align: center; margin-bottom: 20px; outline: none; }
+        #correction-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; color: white; }
         #correction-canvas { background: white; border-radius: 15px; margin: 20px; width: 250px; height: 250px; }
         #progress-hint { color: #ffcc00; font-size: 20px; font-weight: bold; margin-bottom: 10px; }
         .btn-primary { background: #e67e22; color: white; border: none; padding: 15px 40px; border-radius: 30px; font-size: 20px; margin-top: 10px; cursor: pointer; }
-        
-        /* 💡 新增：英文提示样式 */
         .english-hint { color: #7f8c8d; font-size: 20px; margin-bottom: 25px; font-style: italic; }
+        .btn-disabled { background: #ccc; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -43,7 +33,7 @@
     <div id="start-screen">
         <h1 style="color: #d35400;">🏛️ 识字神庙</h1>
         <p>看拼音和英文提示，写出汉字。<br>只有第一次写对才有积分奖励哦！</p>
-        <button class="btn-primary" onclick="startChallenge()">开始挑战</button>
+        <button id="start-btn" class="btn-primary btn-disabled" disabled onclick="startChallenge()">正在载入宝藏数据...</button>
     </div>
 </div>
 
@@ -83,19 +73,29 @@
             try {
                 const res = await fetch('words.json');
                 wordList = await res.json();
-            } catch (e) { console.error("字典加载失败"); }
+                
+                // 💡 数据加载完成后激活按钮
+                const startBtn = document.getElementById('start-btn');
+                if (startBtn) {
+                    startBtn.innerText = "开始挑战";
+                    startBtn.disabled = false;
+                    startBtn.classList.remove('btn-disabled');
+                }
+            } catch (e) { 
+                console.error("字典加载失败"); 
+                document.getElementById('start-btn').innerText = "数据载入失败，请刷新";
+            }
         } else {
             location.href = 'index.html';
         }
     });
 
     function startChallenge() {
-        const eligible = learnedWords; 
-        if (eligible.length < 1) {
+        if (learnedWords.length < 1) {
             alert("先去识字森林学习一些单词吧！");
             return;
         }
-        testQueue = [...eligible].sort(() => Math.random() - 0.5).slice(0, 5);
+        testQueue = [...learnedWords].sort(() => Math.random() - 0.5).slice(0, 5);
         currentIdx = 0;
         renderQuestion();
     }
@@ -109,7 +109,6 @@
         const currentWord = testQueue[currentIdx];
         const dictInfo = wordList.find(w => w.text === currentWord.text);
         
-        // 💡 提取拼音和英文意思
         const pinyin = dictInfo ? dictInfo.pinyin : "拼音丢失";
         const englishMeaning = dictInfo && dictInfo.english ? dictInfo.english : "No translation";
 
@@ -139,11 +138,8 @@
 
         learnedWords = learnedWords.map(w => {
             if (w.text === word.text) {
-                if (isCorrect) {
-                    w.correctCount = (w.correctCount || 0) + 1;
-                } else {
-                    w.wrongCount = (w.wrongCount || 0) + 1;
-                }
+                if (isCorrect) w.correctCount = (w.correctCount || 0) + 1;
+                else w.wrongCount = (w.wrongCount || 0) + 1;
             }
             return w;
         });
